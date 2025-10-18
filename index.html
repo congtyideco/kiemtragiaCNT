@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ứng Dụng Kiểm Tra Đơn Hàng Chuyên Nghiệp</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap');
+        :root {
+            --primary-color: #0052cc; --secondary-color: #6c757d; --background-color: #f4f5f7;
+            --text-color: #172b4d; --border-color: #dfe1e6; --success-color: #00875a;
+            --error-color: #de350b; --white-color: #ffffff; --shadow: rgba(0, 0, 0, 0.1) 0px 4px 6px -1px, rgba(0, 0, 0, 0.06) 0px 2px 4px -1px;
+            --hover-primary: #0040a0; --hover-success: #006644; --hover-error: #bf2600;
+        }
+        body { font-family: 'Be Vietnam Pro', sans-serif; background-color: var(--background-color); color: var(--text-color); margin: 0; padding: 24px; line-height: 1.6; }
+        .container { max-width: 1400px; margin: auto; background: var(--white-color); padding: 32px; border-radius: 8px; box-shadow: var(--shadow); position: relative; }
+        h1, h2, h3 { color: var(--text-color); margin-top: 0; }
+        h1 { font-size: 24px; border-bottom: 2px solid var(--primary-color); padding-bottom: 12px; margin-bottom: 24px; }
+        h2 { font-size: 20px; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid var(--border-color); }
+        h3 { font-size: 18px; color: var(--primary-color); }
+        .controls, .table-actions, .selector-wrapper { margin-bottom: 24px; display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+        .file-upload { display: flex; align-items: center; gap: 12px; padding: 12px; background: #fafbfc; border: 2px dashed var(--border-color); border-radius: 5px; cursor: pointer; transition: border-color 0.2s, background-color 0.2s; }
+        .file-upload:hover { border-color: var(--primary-color); background-color: #f0f6ff;}
+        label, .label { font-weight: 600; }
+        input[type="file"] { display: none; }
+        select, input[type="text"] { border: 2px solid var(--border-color); padding: 8px 12px; border-radius: 4px; font-size: 14px; transition: border-color 0.2s, box-shadow 0.2s; }
+        select:focus, input[type="text"]:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(0, 82, 204, 0.2); outline: none;}
+        button { background-color: var(--primary-color); color: var(--white-color); border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 15px; font-weight: 600; transition: background-color 0.2s, transform 0.1s; }
+        button:hover { background-color: var(--hover-primary); transform: translateY(-1px); }
+        .success-btn { background-color: var(--success-color); }
+        .success-btn:hover { background-color: var(--hover-success); }
+        .error-btn { background-color: var(--error-color); }
+        .error-btn:hover { background-color: var(--hover-error); }
+        .secondary-btn { background-color: var(--secondary-color); }
+        .secondary-btn:hover { background-color: #5a6268; }
+        #exportExcelBtn { background-color: #17a2b8; } #exportExcelBtn:hover { background-color: #107f91; }
+        .table-container { overflow-x: auto; max-height: 450px; border: 1px solid var(--border-color); border-radius: 5px;}
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px 16px; border: 1px solid var(--border-color); text-align: left; }
+        thead { background-color: #f4f5f7; color: var(--text-color); position: sticky; top: 0; z-index: 10; }
+        th { font-weight: 600; }
+        tbody tr:nth-child(even) { background-color: #fafbfc; }
+        tbody tr:hover { background-color: #e9f2ff; }
+        td[contenteditable="true"] { background-color: #fffae6; }
+        .delete-btn { background-color: var(--error-color); padding: 5px 10px; font-size: 12px; }
+        hr { border: 0; height: 1px; background-color: var(--border-color); margin: 40px 0; }
+        #resultContainer { margin-top: 24px; }
+        .result-section { margin-bottom: 20px; padding: 20px; border-radius: 5px; border-left: 5px solid; }
+        .result-section h3 { margin-top: 0; font-size: 16px; }
+        .correct { border-left-color: var(--success-color); background-color: #e3fcef; }
+        .incorrect { border-left-color: var(--error-color); background-color: #ffebe6; }
+        ul { padding-left: 20px; margin: 0;} li { margin-bottom: 8px; }
+        .hidden { display: none !important; }
+        #mappingSection, #mappingOrderSection { border: 2px solid var(--primary-color); border-radius: 8px; padding: 24px; margin-top: 24px; background: var(--white-color); }
+        .mapping-row { display: flex; align-items: center; margin-bottom: 16px; gap: 12px;}
+        .mapping-row label { flex-basis: 150px; text-align: right; font-weight: 600; }
+        .mapping-row select, .mapping-row input { flex-grow: 1; }
+        .mapping-actions { text-align: right; margin-top: 24px; }
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.6); align-items: center; justify-content: center; }
+        .modal-content { background-color: #fefefe; margin: auto; padding: 32px; border: 1px solid #888; width: 90%; max-width: 800px; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); position: relative; animation: fadeIn 0.3s; }
+        .modal-content h3 { color: var(--primary-color); margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 16px; }
+        .modal-content ul { list-style-type: disc; } .modal-content ol { padding-left: 24px; }
+        .close-btn { color: #aaa; position: absolute; top: 12px; right: 20px; font-size: 32px; font-weight: bold; cursor: pointer; }
+        .close-btn:hover, .close-btn:focus { color: black; }
+        .modal-show { display: flex; }
+        #helpBtn { position: absolute; top: 32px; right: 32px; background-color: #ffab00; font-size: 14px; padding: 8px 16px; z-index: 5; }
+        #helpBtn:hover { background-color: #ff9900; }
+        @keyframes fadeIn { from {opacity: 0; transform: scale(0.95);} to {opacity: 1; transform: scale(1);} }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button id="helpBtn">❓ Hướng Dẫn</button>
+        <h1>Trình Kiểm Tra Đơn Hàng Gía - IDECO</h1>
+        
+        <h2>Quản lý Dữ liệu Chuẩn</h2>
+        <div class="selector-wrapper">
+            <label for="datasetSelector" class="label">Bước 1: Chọn Bảng Dữ Liệu (Nếu đã có)</label>
+            <select id="datasetSelector">
+                <option value="">-- Vui lòng chọn --</option>
+            </select>
+        </div>
+        <div class="controls">
+            <label for="uploadMaster" class="file-upload">
+                <span>📂 Hoặc Tải Lên Bảng Dữ Liệu Mới</span>
+                <input type="file" id="uploadMaster" accept=".xlsx, .xls, .csv">
+            </label>
+        </div>
+
+        <div id="mappingSection" class="hidden">
+            <h3>Bước 2: Ánh xạ cột</h3>
+             <div class="mapping-row"><label for="mapMaSP">Cột Mã SP (*):</label><select id="mapMaSP"></select></div>
+             <div class="mapping-row"><label for="mapTenSP">Cột Tên sản phẩm (*):</label><select id="mapTenSP"></select></div>
+             <div class="mapping-row"><label for="mapGia">Cột Giá (*):</label><select id="mapGia"></select></div>
+             <hr>
+             <div class="mapping-row"><label for="mapSTT">Cột STT (Tùy chọn):</label><select id="mapSTT"></select></div>
+             <div class="mapping-row"><label for="mapDVT">Cột ĐVT (Tùy chọn):</label><select id="mapDVT"></select></div>
+             <div class="mapping-row"><label for="datasetNameInput">Đặt tên bảng dữ liệu (*):</label><input type="text" id="datasetNameInput" placeholder="VD: Bảng giá sỉ T10/2025"></div>
+             <div class="mapping-actions">
+                 <button id="confirmMappingBtn" class="success-btn">Xác Nhận & Lưu</button>
+                 <button id="cancelMappingBtn" class="secondary-btn">Hủy</button>
+            </div>
+        </div>
+
+        <div class="table-actions">
+            <button id="addRowBtn">➕ Thêm Hàng</button>
+            <button id="saveToFirebaseBtn" class="success-btn">💾 Lưu Thay Đổi</button>
+            <button id="exportExcelBtn">📄 Xuất Excel</button>
+            <button id="clearDataBtn" class="error-btn">🗑️ Xóa Bảng Này</button>
+        </div>
+        <div class="table-container">
+            <table id="dataTable">
+                <thead><tr><th>STT</th><th>Mã SP</th><th>Tên sản phẩm</th><th>ĐVT</th><th>Giá xuất HĐ (sau VAT)</th><th>Hành động</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <hr>
+
+        <h2>Kiểm Tra Đơn Hàng</h2>
+         <div class="selector-wrapper">
+             <label class="label">Đối chiếu với bảng: "<b id="currentDatasetName" style="color:var(--primary-color)">...</b>"</label>
+        </div>
+        <div class="controls">
+             <label for="uploadOrder" class="file-upload">
+                <span>📂 Tải lên file Đơn Hàng</span>
+                <input type="file" id="uploadOrder" accept=".xlsx, .xls, .csv">
+            </label>
+        </div>
+
+        <div id="mappingOrderSection" class="hidden">
+             <h3>Bước 2: Ánh xạ cột cho file Đơn Hàng</h3>
+             <div class="mapping-row"><label for="mapOrderMaSP">Cột Mã SP (*):</label><select id="mapOrderMaSP"></select></div>
+             <div class="mapping-row"><label for="mapOrderTenSP">Cột Tên sản phẩm (*):</label><select id="mapOrderTenSP"></select></div>
+             <div class="mapping-row"><label for="mapOrderGia">Cột Giá (*):</label><select id="mapOrderGia"></select></div>
+             <div class="mapping-actions">
+                 <button id="confirmOrderMappingBtn" class="success-btn">Xác Nhận & Kiểm Tra</button>
+                 <button id="cancelOrderMappingBtn" class="secondary-btn">Hủy</button>
+            </div>
+        </div>
+        <div id="resultContainer" class="hidden">
+            <h2>Kết Quả Kiểm Tra</h2>
+            <div id="results"></div>
+        </div>
+    </div>
+    
+    <div id="helpModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" id="closeHelpModal">&times;</span>
+            <h3>Hướng Dẫn Sử Dụng</h3>
+            <h4>1. Quản lý Dữ Liệu Gốc</h4>
+            <ul>
+                <li><strong>Tải Lên Bảng Dữ Liệu Mới:</strong>
+                    <ol>
+                        <li>Nhấn vào ô "Tải lên file Excel mới" và chọn file của bạn.</li>
+                        <li>Một khu vực <strong>"Tham chiếu cột "</strong> sẽ hiện ra ngay trên trang.</li>
+                        <li>Với mỗi dòng có dấu sao (*), hãy chọn từ menu thả xuống tên cột tương ứng có trong file của bạn.</li>
+                        <li>Nhập tên cho bảng dữ liệu mới và nhấn "Xác Nhận & Lưu".</li>
+                    </ol>
+                </li>
+                 <li><strong>Chọn Bảng Dữ Liệu:</strong> Dùng menu thả xuống để xem, sửa, hoặc dùng làm tiêu chuẩn đối chiếu.</li>
+                <li><strong>Xóa Bảng Dữ Liệu:</strong> Chọn một bảng từ menu, sau đó nhấn "Xóa Bảng Dữ Liệu Này".</li>
+                <li><strong>Thao tác trên bảng:</strong> Các nút "Thêm Hàng", "Lưu Thay Đổi", "Xuất Excel" đều sẽ làm việc trên bảng dữ liệu bạn đang chọn.</li>
+            </ul>
+             <h4>2. Kiểm Tra Đơn Hàng</h4>
+            <ul>
+                 <li><strong>Bước 1:</strong> Dùng menu thả xuống để chọn đúng Bảng Dữ Liệu Chuẩn bạn muốn dùng để đối chiếu.</li>
+                 <li><strong>Bước 2:</strong> Chọn file đơn hàng. Khu vực "Ánh Xạ Cột" cũng sẽ hiện ra để bạn chỉ định cột cho file đơn hàng.</li>
+                 <li><strong>Bước 3:</strong> Nhấn "Xác Nhận & Kiểm Tra" và kết quả sẽ được hiển thị ở dưới cùng.</li>
+            </ul>
+			 <h4>2. Cách xuất file đơn hàng PDF từ DEEPSEEK AI </h4>
+            <ul>
+                 <li><strong>Bước 1:</strong> Đăng nhập Deepseek ai bằng gmail của em- có thể dùng sau này cho việc khác.</li>
+                 <li><strong>Bước 2:</strong> Up các đơn hàng file pfd của chuỗi NT lên và viết prompt để AI lập bảng .</li>
+                 <li><strong>Bước 3: dàn đoạn sau vào </strong> Vui lòng viết lại bảng đơn hàng từ file PDF đính kèm thàng bảng hàng cột gồm STT Mã - Tên sản phẩm - Giá xuất ( HD) VAT. Ghi chú đơn vị tính ví dụ: 300,000 chứ không phải 300.000, hãy viết chính xác mã, tên sản phẩm và giá . </li>
+            </ul>
+        </div>
+    </div>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-database.js"></script>
+
+    <script>
+         const firebaseConfig = {
+  apiKey: "AIzaSyDtxpm3ZGde1Zl0BtTalGAsY9XFGQyncjQ",
+  authDomain: "kiemtradon.firebaseapp.com",
+  databaseURL: "https://kiemtradon-default-rtdb.firebaseio.com",
+  projectId: "kiemtradon",
+  storageBucket: "kiemtradon.firebasestorage.app",
+  messagingSenderId: "113183972853",
+  appId: "1:113183972853:web:5ecbd594ef8a5154d214bc",
+  measurementId: "G-N59VCM3QJF"
+};
+
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const masterDataRef = database.ref('du_lieu_goc');
+
+        let tempJsonData = null;
+
+        const datasetSelector = document.getElementById('datasetSelector');
+        const currentDatasetNameSpan = document.getElementById('currentDatasetName');
+        const uploadMasterInput = document.getElementById('uploadMaster');
+        const dataTableBody = document.querySelector('#dataTable tbody');
+        const addRowBtn = document.getElementById('addRowBtn');
+        const saveToFirebaseBtn = document.getElementById('saveToFirebaseBtn');
+        const exportExcelBtn = document.getElementById('exportExcelBtn');
+        const clearDataBtn = document.getElementById('clearDataBtn');
+        const uploadOrderInput = document.getElementById('uploadOrder');
+        const resultsDiv = document.getElementById('results');
+        const resultContainer = document.getElementById('resultContainer');
+        
+        const mappingSection = document.getElementById('mappingSection');
+        const confirmMappingBtn = document.getElementById('confirmMappingBtn');
+        const cancelMappingBtn = document.getElementById('cancelMappingBtn');
+
+        const mappingOrderSection = document.getElementById('mappingOrderSection');
+        const confirmOrderMappingBtn = document.getElementById('confirmOrderMappingBtn');
+        const cancelOrderMappingBtn = document.getElementById('cancelOrderMappingBtn');
+        
+        const helpBtn = document.getElementById('helpBtn');
+        const helpModal = document.getElementById('helpModal');
+        const closeHelpModal = document.getElementById('closeHelpModal');
+
+        helpBtn.onclick = () => helpModal.classList.add('modal-show');
+        closeHelpModal.onclick = () => helpModal.classList.remove('modal-show');
+        window.onclick = (event) => { if (event.target == helpModal) helpModal.classList.remove('modal-show'); };
+
+        function getSelectedDatasetKey() { return datasetSelector.value; }
+
+        function populateDatasetSelector() {
+            masterDataRef.once('value', snapshot => {
+                const datasets = snapshot.val();
+                const currentKey = getSelectedDatasetKey();
+                datasetSelector.innerHTML = '<option value="">-- Vui lòng chọn --</option>';
+                if (datasets) {
+                    Object.keys(datasets).forEach(key => {
+                        const option = new Option(key, key);
+                        datasetSelector.appendChild(option);
+                    });
+                    if (currentKey) datasetSelector.value = currentKey;
+                }
+            });
+        }
+        
+        datasetSelector.addEventListener('change', () => {
+            loadDataFromFirebase();
+            currentDatasetNameSpan.textContent = getSelectedDatasetKey() || '...';
+        });
+        
+        function loadDataFromFirebase() {
+            const datasetKey = getSelectedDatasetKey();
+            dataTableBody.innerHTML = '';
+            if (!datasetKey) {
+                dataTableBody.innerHTML = '<tr><td colspan="6">Vui lòng chọn một bảng dữ liệu để xem.</td></tr>';
+                return;
+            }
+            dataTableBody.innerHTML = `<tr><td colspan="6">Đang tải dữ liệu từ bảng "${datasetKey}"...</td></tr>`;
+            masterDataRef.child(datasetKey).once('value', snapshot => {
+                const data = snapshot.val();
+                dataTableBody.innerHTML = '';
+                if (data && Array.isArray(data)) {
+                    data.forEach(item => dataTableBody.appendChild(createTableRow(item)));
+                } else {
+                    dataTableBody.innerHTML = `<tr><td colspan="6">Bảng dữ liệu "${datasetKey}" không có dữ liệu.</td></tr>`;
+                }
+            });
+        }
+
+        function setupMappingUI(file, section, selects) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const data = new Uint8Array(event.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const headers = XLSX.utils.sheet_to_json(worksheet, { header: 1 })[0] || [];
+                    tempJsonData = XLSX.utils.sheet_to_json(worksheet);
+
+                    if (tempJsonData.length === 0) throw new Error("File không có dữ liệu.");
+
+                    Object.values(selects).forEach(sel => sel.innerHTML = '');
+
+                    const noneOption = '<option value="">-- Bỏ qua --</option>';
+                    headers.forEach(header => {
+                        const option = `<option value="${header}">${header}</option>`;
+                        Object.values(selects).forEach(sel => sel.innerHTML += option);
+                    });
+                    
+                    if (selects.mapSTT) selects.mapSTT.innerHTML = noneOption + selects.mapSTT.innerHTML;
+                    if (selects.mapDVT) selects.mapDVT.innerHTML = noneOption + selects.mapDVT.innerHTML;
+
+                    section.classList.remove('hidden');
+                } catch (err) { alert("Lỗi khi đọc file: " + err.message); }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        uploadMasterInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+            document.getElementById('datasetNameInput').value = file.name.replace(/\.[^/.]+$/, "");
+            setupMappingUI(file, mappingSection, {
+                mapMaSP: document.getElementById('mapMaSP'),
+                mapTenSP: document.getElementById('mapTenSP'),
+                mapGia: document.getElementById('mapGia'),
+                mapSTT: document.getElementById('mapSTT'),
+                mapDVT: document.getElementById('mapDVT')
+            });
+            event.target.value = '';
+        });
+
+        cancelMappingBtn.addEventListener('click', () => {
+            mappingSection.classList.add('hidden');
+            tempJsonData = null;
+        });
+
+        confirmMappingBtn.addEventListener('click', () => {
+            try {
+                const mapping = {
+                    ma_sp: document.getElementById('mapMaSP').value,
+                    ten_sp: document.getElementById('mapTenSP').value,
+                    gia_xuat: document.getElementById('mapGia').value,
+                    stt: document.getElementById('mapSTT').value,
+                    dvt: document.getElementById('mapDVT').value,
+                    datasetName: document.getElementById('datasetNameInput').value.trim()
+                };
+
+                if (!mapping.ma_sp || !mapping.ten_sp || !mapping.gia_xuat || !mapping.datasetName) throw new Error("Vui lòng điền đầy đủ các trường bắt buộc (*).");
+                if (!tempJsonData) throw new Error("Không có dữ liệu file tạm thời. Vui lòng thử lại.");
+
+                const dataToSave = tempJsonData.map((row, index) => ({
+                    stt: (mapping.stt ? row[mapping.stt] : (index + 1)) || (index + 1),
+                    ma_sp: row[mapping.ma_sp] || '',
+                    ten_sp: row[mapping.ten_sp] || '',
+                    dvt: (mapping.dvt ? row[mapping.dvt] : '') || '',
+                    gia_xuat: row[mapping.gia_xuat] || 0
+                }));
+
+                masterDataRef.child(mapping.datasetName).set(dataToSave).then(() => {
+                    alert(`Đã lưu thành công bảng dữ liệu "${mapping.datasetName}"!`);
+                    populateDatasetSelector();
+                    datasetSelector.value = mapping.datasetName;
+                    loadDataFromFirebase();
+                    cancelMappingBtn.click();
+                }).catch(err => { throw new Error("Lỗi khi lưu vào Firebase: " + err.message); });
+
+            } catch(error) { alert("Đã có lỗi xảy ra: " + error.message); }
+        });
+
+        uploadOrderInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+            if (!getSelectedDatasetKey()) {
+                alert("Vui lòng chọn Bảng Dữ Liệu Chuẩn để đối chiếu trước!");
+                event.target.value = '';
+                return;
+            }
+            setupMappingUI(file, mappingOrderSection, {
+                mapOrderMaSP: document.getElementById('mapOrderMaSP'),
+                mapOrderTenSP: document.getElementById('mapOrderTenSP'),
+                mapOrderGia: document.getElementById('mapOrderGia')
+            });
+            event.target.value = '';
+        });
+
+        cancelOrderMappingBtn.addEventListener('click', () => {
+            mappingOrderSection.classList.add('hidden');
+            tempJsonData = null;
+        });
+
+        confirmOrderMappingBtn.addEventListener('click', () => {
+            try {
+                const mapping = {
+                    ma_sp: document.getElementById('mapOrderMaSP').value,
+                    ten_sp: document.getElementById('mapOrderTenSP').value,
+                    gia_xuat: document.getElementById('mapOrderGia').value,
+                };
+
+                if (!mapping.ma_sp || !mapping.ten_sp || !mapping.gia_xuat) throw new Error("Vui lòng ánh xạ đầy đủ các cột cho file đơn hàng.");
+                if (!tempJsonData) throw new Error("Không có dữ liệu file tạm thời. Vui lòng thử lại.");
+
+                const datasetKey = getSelectedDatasetKey();
+                masterDataRef.child(datasetKey).once('value', snapshot => {
+                    const masterData = snapshot.val();
+                    if (!masterData) { alert(`Bảng dữ liệu "${datasetKey}" không có dữ liệu.`); return; }
+
+                    const masterDataMap = new Map();
+                    masterData.forEach(item => { if (item.ma_sp) masterDataMap.set(String(item.ma_sp).trim(), item); });
+
+                    const correctItems = [], incorrectItems = [];
+                    tempJsonData.forEach(orderItem => {
+                        const orderMaSP = String(orderItem[mapping.ma_sp] || '').trim();
+                        if (!orderMaSP) return;
+                        
+                        const orderGiaXuat = parseFloat(orderItem[mapping.gia_xuat] || 0);
+                        
+                        if (masterDataMap.has(orderMaSP)) {
+                            const masterItem = masterDataMap.get(orderMaSP);
+                            const masterGia = parseFloat(masterItem.gia_xuat || 0);
+                            const masterTenSP = masterItem.ten_sp; 
+
+                            if (Math.abs(orderGiaXuat - masterGia) < 0.001) {
+                                correctItems.push(`<li><b>${orderMaSP} - ${masterTenSP}</b>: Đúng giá (${orderGiaXuat.toLocaleString('vi-VN')} VNĐ)</li>`);
+                            } else {
+                                const chenhLech = orderGiaXuat - masterGia;
+                                incorrectItems.push(`<li><b>${orderMaSP} - ${masterTenSP}</b>: <span style="font-weight:bold; color:var(--error-color);">SAI GIÁ</span>. ĐH: ${orderGiaXuat.toLocaleString('vi-VN')} đ, Gốc: ${masterGia.toLocaleString('vi-VN')} đ. (Lệch: ${chenhLech.toLocaleString('vi-VN')} đ)</li>`);
+                            }
+                        } else {
+                            incorrectItems.push(`<li><b>${orderMaSP} - ${orderItem[mapping.ten_sp] || ''}</b>: Không tìm thấy MÃ SP.</li>`);
+                        }
+                    });
+                    displayResults(correctItems, incorrectItems);
+                    cancelOrderMappingBtn.click();
+                });
+            } catch (error) { alert("Đã có lỗi xảy ra: " + error.message); }
+        });
+
+        clearDataBtn.addEventListener('click', () => {
+            const datasetKey = getSelectedDatasetKey();
+            if (!datasetKey) { alert("Vui lòng chọn một bảng dữ liệu để xóa."); return; }
+            if (confirm(`Bạn có chắc chắn muốn XÓA VĨNH VIỄN bảng dữ liệu "${datasetKey}" không?`)) {
+                masterDataRef.child(datasetKey).remove().then(() => {
+                    alert(`Đã xóa thành công bảng dữ liệu "${datasetKey}".`);
+                    populateDatasetSelector();
+                    loadDataFromFirebase();
+                });
+            }
+        });
+
+        saveToFirebaseBtn.addEventListener('click', () => {
+            const datasetKey = getSelectedDatasetKey();
+            if (!datasetKey) { alert("Vui lòng chọn một bảng dữ liệu để lưu."); return; }
+            
+            const rows = dataTableBody.querySelectorAll('tr');
+            const dataToSave = Array.from(rows).map(row => {
+                const cells = row.querySelectorAll('td');
+                return {
+                    stt: cells[0].innerText, ma_sp: cells[1].innerText, ten_sp: cells[2].innerText,
+                    dvt: cells[3].innerText, gia_xuat: parseFloat(cells[4].innerText.replace(/[.,]/g, '')) || 0
+                };
+            });
+            masterDataRef.child(datasetKey).set(dataToSave).then(() => alert(`Lưu thay đổi cho bảng "${datasetKey}" thành công!`));
+        });
+
+        addRowBtn.addEventListener('click', () => {
+            if (!getSelectedDatasetKey()) { alert("Vui lòng chọn một bảng dữ liệu trước khi thêm hàng."); return; }
+            dataTableBody.appendChild(createTableRow({ stt: dataTableBody.rows.length + 1 }, true));
+        });
+
+        exportExcelBtn.addEventListener('click', () => {
+            const datasetKey = getSelectedDatasetKey();
+            if (!datasetKey) { alert("Vui lòng chọn bảng dữ liệu để xuất."); return; }
+            const rows = dataTableBody.querySelectorAll('tr');
+            if (rows.length === 0 || dataTableBody.querySelector('td[colspan="6"]')) { alert("Không có dữ liệu để xuất!"); return; }
+            const data = Array.from(rows).map(row => {
+                const cells = row.querySelectorAll('td');
+                return { 'STT': cells[0].innerText, 'Mã SP': cells[1].innerText, 'Tên sản phẩm': cells[2].innerText, 'ĐVT': cells[3].innerText, 'Giá xuất HĐ (sau VAT)': cells[4].innerText };
+            });
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, datasetKey);
+            XLSX.writeFile(wb, `${datasetKey}.xlsx`);
+        });
+
+        function createTableRow(item, isNew = false) {
+            const row = document.createElement('tr');
+            row.innerHTML = `<td contenteditable="${isNew}">${item.stt||''}</td><td contenteditable="true">${item.ma_sp||''}</td><td contenteditable="true">${item.ten_sp||''}</td><td contenteditable="true">${item.dvt||''}</td><td contenteditable="true">${item.gia_xuat!=null?Number(item.gia_xuat).toLocaleString('vi-VN'):''}</td><td><button class="delete-btn">Xóa</button></td>`;
+            row.querySelector('.delete-btn').addEventListener('click', () => row.remove());
+            return row;
+        }
+
+        function displayResults(correct, incorrect) {
+            resultContainer.classList.remove('hidden');
+            resultsDiv.innerHTML = `<div class="result-section correct"><h3 style="color: var(--success-color);">✅ ĐÚNG GIÁ (${correct.length})</h3><ul>${correct.length>0?correct.join(''):'<li>Không có.</li>'}</ul></div><div class="result-section incorrect"><h3 style="color: var(--error-color);">❌ SAI GIÁ / KHÔNG TÌM THẤY (${incorrect.length})</h3><ul>${incorrect.length>0?incorrect.join(''):'<li>Không có.</li>'}</ul></div>`;
+        }
+
+        document.addEventListener('DOMContentLoaded', populateDatasetSelector);
+    </script>
+</body>
+</html>
