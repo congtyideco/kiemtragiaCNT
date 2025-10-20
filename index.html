@@ -98,6 +98,7 @@
              <hr>
              <div class="mapping-row"><label for="mapSTT">Cột STT (Tùy chọn):</label><select id="mapSTT"></select></div>
              <div class="mapping-row"><label for="mapDVT">Cột ĐVT (Tùy chọn):</label><select id="mapDVT"></select></div>
+             <div class="mapping-row"><label for="mapCK">Cột Chiết khấu (%) (Tùy chọn):</label><select id="mapCK"></select></div>
              <div class="mapping-row"><label for="datasetNameInput">Đặt tên bảng dữ liệu (*):</label><input type="text" id="datasetNameInput" placeholder="VD: Bảng giá sỉ T10/2025"></div>
              <div class="mapping-actions">
                  <button id="confirmMappingBtn" class="success-btn">Xác Nhận & Lưu</button>
@@ -113,7 +114,7 @@
         </div>
         <div class="table-container">
             <table id="dataTable">
-                <thead><tr><th>STT</th><th>Mã SP</th><th>Tên sản phẩm</th><th>ĐVT</th><th>Giá xuất HĐ (sau VAT)</th><th>Hành động</th></tr></thead>
+                <thead><tr><th>STT</th><th>Mã SP</th><th>Tên sản phẩm</th><th>ĐVT</th><th>Giá xuất HĐ (sau VAT)</th><th>Chiết khấu (%)</th><th>Hành động</th></tr></thead>
                 <tbody></tbody>
             </table>
         </div>
@@ -136,6 +137,7 @@
              <div class="mapping-row"><label for="mapOrderMaSP">Cột Mã SP (*):</label><select id="mapOrderMaSP"></select></div>
              <div class="mapping-row"><label for="mapOrderTenSP">Cột Tên sản phẩm (*):</label><select id="mapOrderTenSP"></select></div>
              <div class="mapping-row"><label for="mapOrderGia">Cột Giá (*):</label><select id="mapOrderGia"></select></div>
+             <div class="mapping-row"><label for="mapOrderCK">Cột Chiết khấu (%) (Tùy chọn):</label><select id="mapOrderCK"></select></div>
              <div class="mapping-actions">
                  <button id="confirmOrderMappingBtn" class="success-btn">Xác Nhận & Kiểm Tra</button>
                  <button id="cancelOrderMappingBtn" class="secondary-btn">Hủy</button>
@@ -150,7 +152,7 @@
     <div id="helpModal" class="modal">
         <div class="modal-content">
             <span class="close-btn" id="closeHelpModal">&times;</span>
-            <h3>Hướng Dẫn Sử Dụng</h3>
+           <h3>Hướng Dẫn Sử Dụng</h3>
             <h4>1. Quản lý Dữ Liệu Gốc</h4>
             <ul>
                 <li><strong>Tải Lên Bảng Dữ Liệu Mới:</strong>
@@ -175,8 +177,11 @@
             <ul>
                  <li><strong>Bước 1:</strong> Đăng nhập Deepseek ai bằng gmail của em- có thể dùng sau này cho việc khác.</li>
                  <li><strong>Bước 2:</strong> Up các đơn hàng file pfd của chuỗi NT lên và viết prompt để AI lập bảng .</li>
-                 <li><strong>Bước 3: dàn đoạn sau vào </strong> Vui lòng viết lại bảng đơn hàng từ file PDF đính kèm thàng bảng hàng cột gồm STT Mã - Tên sản phẩm - Giá xuất ( HD) VAT. Ghi chú đơn vị tính ví dụ: 300,000 chứ không phải 300.000, hãy viết chính xác mã, tên sản phẩm và giá . </li>
-            </ul>
+                 <li><strong>File đơn LC đưa vào  </strong>  "Vui lòng viết lại bảng đơn hàng từ các file PDF đính kèm thàng bảng hàng cột gồm STT Mã - Tên sản phẩm - Giá xuất ( HD) VAT. Ghi chú đơn vị tính ví dụ: 300,000 chứ không phải 300.000, hãy viết chính xác mã, tên sản phẩm và giá . </li>
+               <li><strong>File đơn PMC  đoạn sau vào </strong> "Vui lòng viết lại bảng đơn hàng từ các file PDF đính kèm thàng bảng hàng cột gồm  STT Mã (item product)  - Tên sản phẩm ( Product name) - Gía bán ( Unit price) - Chiết khấu ( Discount percent). Ghi chú đơn vị tính ví dụ: 300,000 chứ không phải 300.000,  chiết khấu là % .Hãy viết chính xác mã, tên sản phẩm và giá . </li>
+            
+			
+			</ul>
         </div>
     </div>
     
@@ -229,6 +234,27 @@
         closeHelpModal.onclick = () => helpModal.classList.remove('modal-show');
         window.onclick = (event) => { if (event.target == helpModal) helpModal.classList.remove('modal-show'); };
 
+        /**
+         * THAY ĐỔI: Hàm helper mới để chuẩn hóa giá trị chiết khấu.
+         * Xử lý các trường hợp: 0.24, 24, "24%", "24" -> 24
+         */
+        function getCKValue(row, mappingKey) {
+            if (!mappingKey) return 0;
+            let val = row[mappingKey]; // Giá trị thô từ sheet_to_json
+            if (val === undefined || val === null) return 0;
+
+            let num = parseFloat(val); // "24%" -> 24.  0.24 -> 0.24.  24 -> 24. "24" -> 24.
+            if (isNaN(num)) return 0;
+
+            // Kiểm tra nếu giá trị *gốc* là kiểu SỐ và là dạng thập phân (ví dụ: 0.24 từ Excel)
+            if (typeof val === 'number' && Math.abs(num) <= 1 && num !== 0) {
+                 return num * 100; // 0.24 -> 24
+            }
+            
+            // Ngược lại, parseFloat đã xử lý đúng ("24%" -> 24) hoặc nó đã là số nguyên (24).
+            return num;
+        }
+
         function getSelectedDatasetKey() { return datasetSelector.value; }
 
         function populateDatasetSelector() {
@@ -255,17 +281,17 @@
             const datasetKey = getSelectedDatasetKey();
             dataTableBody.innerHTML = '';
             if (!datasetKey) {
-                dataTableBody.innerHTML = '<tr><td colspan="6">Vui lòng chọn một bảng dữ liệu để xem.</td></tr>';
+                dataTableBody.innerHTML = '<tr><td colspan="7">Vui lòng chọn một bảng dữ liệu để xem.</td></tr>';
                 return;
             }
-            dataTableBody.innerHTML = `<tr><td colspan="6">Đang tải dữ liệu từ bảng "${datasetKey}"...</td></tr>`;
+            dataTableBody.innerHTML = `<tr><td colspan="7">Đang tải dữ liệu từ bảng "${datasetKey}"...</td></tr>`;
             masterDataRef.child(datasetKey).once('value', snapshot => {
                 const data = snapshot.val();
                 dataTableBody.innerHTML = '';
                 if (data && Array.isArray(data)) {
                     data.forEach(item => dataTableBody.appendChild(createTableRow(item)));
                 } else {
-                    dataTableBody.innerHTML = `<tr><td colspan="6">Bảng dữ liệu "${datasetKey}" không có dữ liệu.</td></tr>`;
+                    dataTableBody.innerHTML = `<tr><td colspan="7">Bảng dữ liệu "${datasetKey}" không có dữ liệu.</td></tr>`;
                 }
             });
         }
@@ -292,6 +318,8 @@
                     
                     if (selects.mapSTT) selects.mapSTT.innerHTML = noneOption + selects.mapSTT.innerHTML;
                     if (selects.mapDVT) selects.mapDVT.innerHTML = noneOption + selects.mapDVT.innerHTML;
+                    if (selects.mapCK) selects.mapCK.innerHTML = noneOption + selects.mapCK.innerHTML;
+                    if (selects.mapOrderCK) selects.mapOrderCK.innerHTML = noneOption + selects.mapOrderCK.innerHTML;
 
                     section.classList.remove('hidden');
                 } catch (err) { alert("Lỗi khi đọc file: " + err.message); }
@@ -308,7 +336,8 @@
                 mapTenSP: document.getElementById('mapTenSP'),
                 mapGia: document.getElementById('mapGia'),
                 mapSTT: document.getElementById('mapSTT'),
-                mapDVT: document.getElementById('mapDVT')
+                mapDVT: document.getElementById('mapDVT'),
+                mapCK: document.getElementById('mapCK')
             });
             event.target.value = '';
         });
@@ -326,6 +355,7 @@
                     gia_xuat: document.getElementById('mapGia').value,
                     stt: document.getElementById('mapSTT').value,
                     dvt: document.getElementById('mapDVT').value,
+                    chiet_khau: document.getElementById('mapCK').value,
                     datasetName: document.getElementById('datasetNameInput').value.trim()
                 };
 
@@ -337,7 +367,8 @@
                     ma_sp: row[mapping.ma_sp] || '',
                     ten_sp: row[mapping.ten_sp] || '',
                     dvt: (mapping.dvt ? row[mapping.dvt] : '') || '',
-                    gia_xuat: row[mapping.gia_xuat] || 0
+                    gia_xuat: row[mapping.gia_xuat] || 0,
+                    chiet_khau: getCKValue(row, mapping.chiet_khau) // THAY ĐỔI: Dùng hàm chuẩn hóa
                 }));
 
                 masterDataRef.child(mapping.datasetName).set(dataToSave).then(() => {
@@ -362,7 +393,8 @@
             setupMappingUI(file, mappingOrderSection, {
                 mapOrderMaSP: document.getElementById('mapOrderMaSP'),
                 mapOrderTenSP: document.getElementById('mapOrderTenSP'),
-                mapOrderGia: document.getElementById('mapOrderGia')
+                mapOrderGia: document.getElementById('mapOrderGia'),
+                mapOrderCK: document.getElementById('mapOrderCK')
             });
             event.target.value = '';
         });
@@ -378,9 +410,10 @@
                     ma_sp: document.getElementById('mapOrderMaSP').value,
                     ten_sp: document.getElementById('mapOrderTenSP').value,
                     gia_xuat: document.getElementById('mapOrderGia').value,
+                    chiet_khau: document.getElementById('mapOrderCK').value
                 };
 
-                if (!mapping.ma_sp || !mapping.ten_sp || !mapping.gia_xuat) throw new Error("Vui lòng ánh xạ đầy đủ các cột cho file đơn hàng.");
+                if (!mapping.ma_sp || !mapping.ten_sp || !mapping.gia_xuat) throw new Error("Vui lòng ánh xạ đầy đủ các cột bắt buộc (*).");
                 if (!tempJsonData) throw new Error("Không có dữ liệu file tạm thời. Vui lòng thử lại.");
 
                 const datasetKey = getSelectedDatasetKey();
@@ -397,17 +430,34 @@
                         if (!orderMaSP) return;
                         
                         const orderGiaXuat = parseFloat(orderItem[mapping.gia_xuat] || 0);
+                        const orderChietKhau = getCKValue(orderItem, mapping.chiet_khau); // THAY ĐỔI: Dùng hàm chuẩn hóa
                         
                         if (masterDataMap.has(orderMaSP)) {
                             const masterItem = masterDataMap.get(orderMaSP);
                             const masterGia = parseFloat(masterItem.gia_xuat || 0);
+                            const masterCK = parseFloat(masterItem.chiet_khau || 0); // Dữ liệu gốc đã được chuẩn hóa
                             const masterTenSP = masterItem.ten_sp; 
 
-                            if (Math.abs(orderGiaXuat - masterGia) < 0.001) {
-                                correctItems.push(`<li><b>${orderMaSP} - ${masterTenSP}</b>: Đúng giá (${orderGiaXuat.toLocaleString('vi-VN')} VNĐ)</li>`);
+                            const giaKhop = Math.abs(orderGiaXuat - masterGia) < 0.001;
+                            const ckKhop = !mapping.chiet_khau || (Math.abs(orderChietKhau - masterCK) < 0.001);
+
+                            if (giaKhop && ckKhop) {
+                                let msg = `<li><b>${orderMaSP} - ${masterTenSP}</b>: Đúng giá (${orderGiaXuat.toLocaleString('vi-VN')} VNĐ)`;
+                                if (mapping.chiet_khau) msg += ` & CK (${orderChietKhau.toLocaleString('vi-VN')}%)`;
+                                msg += `</li>`;
+                                correctItems.push(msg);
                             } else {
-                                const chenhLech = orderGiaXuat - masterGia;
-                                incorrectItems.push(`<li><b>${orderMaSP} - ${masterTenSP}</b>: <span style="font-weight:bold; color:var(--error-color);">SAI GIÁ</span>. ĐH: ${orderGiaXuat.toLocaleString('vi-VN')} đ, Gốc: ${masterGia.toLocaleString('vi-VN')} đ. (Lệch: ${chenhLech.toLocaleString('vi-VN')} đ)</li>`);
+                                let errorMsg = `<li><b>${orderMaSP} - ${masterTenSP}</b>: `;
+                                if (!giaKhop) {
+                                    const chenhLech = orderGiaXuat - masterGia;
+                                    errorMsg += `<span style="font-weight:bold; color:var(--error-color);">SAI GIÁ</span>. ĐH: ${orderGiaXuat.toLocaleString('vi-VN')} đ, Gốc: ${masterGia.toLocaleString('vi-VN')} đ. (Lệch: ${chenhLech.toLocaleString('vi-VN')} đ)`;
+                                }
+                                if (!ckKhop) {
+                                    if (!giaKhop) errorMsg += " / ";
+                                    errorMsg += `<span style="font-weight:bold; color:var(--error-color);">SAI CK</span>. ĐH: ${orderChietKhau.toLocaleString('vi-VN')}%, Gốc: ${masterCK.toLocaleString('vi-VN')}%`;
+                                }
+                                errorMsg += `</li>`;
+                                incorrectItems.push(errorMsg);
                             }
                         } else {
                             incorrectItems.push(`<li><b>${orderMaSP} - ${orderItem[mapping.ten_sp] || ''}</b>: Không tìm thấy MÃ SP.</li>`);
@@ -440,7 +490,8 @@
                 const cells = row.querySelectorAll('td');
                 return {
                     stt: cells[0].innerText, ma_sp: cells[1].innerText, ten_sp: cells[2].innerText,
-                    dvt: cells[3].innerText, gia_xuat: parseFloat(cells[4].innerText.replace(/[.,]/g, '')) || 0
+                    dvt: cells[3].innerText, gia_xuat: parseFloat(cells[4].innerText.replace(/[.,]/g, '')) || 0,
+                    chiet_khau: parseFloat(cells[5].innerText.replace(/[.,%]/g, '')) || 0 // Logic này đã đúng, nó lột bỏ dấu %
                 };
             });
             masterDataRef.child(datasetKey).set(dataToSave).then(() => alert(`Lưu thay đổi cho bảng "${datasetKey}" thành công!`));
@@ -455,10 +506,17 @@
             const datasetKey = getSelectedDatasetKey();
             if (!datasetKey) { alert("Vui lòng chọn bảng dữ liệu để xuất."); return; }
             const rows = dataTableBody.querySelectorAll('tr');
-            if (rows.length === 0 || dataTableBody.querySelector('td[colspan="6"]')) { alert("Không có dữ liệu để xuất!"); return; }
+            if (rows.length === 0 || dataTableBody.querySelector('td[colspan="7"]')) { alert("Không có dữ liệu để xuất!"); return; }
             const data = Array.from(rows).map(row => {
                 const cells = row.querySelectorAll('td');
-                return { 'STT': cells[0].innerText, 'Mã SP': cells[1].innerText, 'Tên sản phẩm': cells[2].innerText, 'ĐVT': cells[3].innerText, 'Giá xuất HĐ (sau VAT)': cells[4].innerText };
+                return { 
+                    'STT': cells[0].innerText, 
+                    'Mã SP': cells[1].innerText, 
+                    'Tên sản phẩm': cells[2].innerText, 
+                    'ĐVT': cells[3].innerText, 
+                    'Giá xuất HĐ (sau VAT)': cells[4].innerText,
+                    'Chiết khấu (%)': cells[5].innerText // Logic này đã đúng, nó xuất "24%"
+                };
             });
             const ws = XLSX.utils.json_to_sheet(data);
             const wb = XLSX.utils.book_new();
@@ -468,14 +526,15 @@
 
         function createTableRow(item, isNew = false) {
             const row = document.createElement('tr');
-            row.innerHTML = `<td contenteditable="${isNew}">${item.stt||''}</td><td contenteditable="true">${item.ma_sp||''}</td><td contenteditable="true">${item.ten_sp||''}</td><td contenteditable="true">${item.dvt||''}</td><td contenteditable="true">${item.gia_xuat!=null?Number(item.gia_xuat).toLocaleString('vi-VN'):''}</td><td><button class="delete-btn">Xóa</button></td>`;
+            // THAY ĐỔI: Thêm dấu '%' vào cột chiết khấu khi hiển thị
+            row.innerHTML = `<td contenteditable="${isNew}">${item.stt||''}</td><td contenteditable="true">${item.ma_sp||''}</td><td contenteditable="true">${item.ten_sp||''}</td><td contenteditable="true">${item.dvt||''}</td><td contenteditable="true">${item.gia_xuat!=null?Number(item.gia_xuat).toLocaleString('vi-VN'):''}</td><td contenteditable="true">${item.chiet_khau!=null?Number(item.chiet_khau).toLocaleString('vi-VN') + '%':''}</td><td><button class="delete-btn">Xóa</button></td>`;
             row.querySelector('.delete-btn').addEventListener('click', () => row.remove());
             return row;
         }
 
         function displayResults(correct, incorrect) {
             resultContainer.classList.remove('hidden');
-            resultsDiv.innerHTML = `<div class="result-section correct"><h3 style="color: var(--success-color);">✅ ĐÚNG GIÁ (${correct.length})</h3><ul>${correct.length>0?correct.join(''):'<li>Không có.</li>'}</ul></div><div class="result-section incorrect"><h3 style="color: var(--error-color);">❌ SAI GIÁ / KHÔNG TÌM THẤY (${incorrect.length})</h3><ul>${incorrect.length>0?incorrect.join(''):'<li>Không có.</li>'}</ul></div>`;
+            resultsDiv.innerHTML = `<div class="result-section correct"><h3 style="color: var(--success-color);">✅ ĐÚNG (${correct.length})</h3><ul>${correct.length>0?correct.join(''):'<li>Không có.</li>'}</ul></div><div class="result-section incorrect"><h3 style="color: var(--error-color);">❌ SAI / KHÔNG TÌM THẤY (${incorrect.length})</h3><ul>${incorrect.length>0?incorrect.join(''):'<li>Không có.</li>'}</ul></div>`;
         }
 
         document.addEventListener('DOMContentLoaded', populateDatasetSelector);
