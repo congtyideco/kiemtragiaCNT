@@ -35,7 +35,7 @@
         .error-btn { background-color: var(--error-color); }
         .error-btn:hover { background-color: var(--hover-error); }
         .secondary-btn { background-color: var(--secondary-color); }
-        .secondary-btn:hover { background-color: #5a6268; }  
+        .secondary-btn:hover { background-color: #5a6268; }
         #exportExcelBtn { background-color: #17a2b8; } #exportExcelBtn:hover { background-color: #107f91; }
         .table-container { overflow-x: auto; max-height: 450px; border: 1px solid var(--border-color); border-radius: 5px;}
         table { width: 100%; border-collapse: collapse; }
@@ -109,12 +109,24 @@
         <div class="table-actions">
             <button id="addRowBtn">➕ Thêm Hàng</button>
             <button id="saveToFirebaseBtn" class="success-btn">💾 Lưu Thay Đổi</button>
+            <button id="exportHDBtn" class="success-btn">🚀 Xuất HD</button>
             <button id="exportExcelBtn">📄 Xuất Excel</button>
             <button id="clearDataBtn" class="error-btn">🗑️ Xóa Bảng Này</button>
         </div>
         <div class="table-container">
             <table id="dataTable">
-                <thead><tr><th>STT</th><th>Mã SP</th><th>Tên sản phẩm</th><th>ĐVT</th><th> Gía bán cho LC / GNYchuỗi PMC/khác</th><th>Chiết khấu (%)</th><th>Hành động</th></tr></thead>
+                <thead>
+                    <tr>
+                        <th>STT</th>
+                        <th>Mã SP</th>
+                        <th>Tên sản phẩm</th>
+                        <th>ĐVT</th>
+                        <th>Giá xuất HĐ (sau VAT)</th>
+                        <th>Chiết khấu (%)</th>
+                        <th>Quy cách</th>
+                        <th>Hành động</th>
+                    </tr>
+                </thead>
                 <tbody></tbody>
             </table>
         </div>
@@ -166,6 +178,8 @@
                  <li><strong>Chọn Bảng Dữ Liệu:</strong> Dùng menu thả xuống để xem, sửa, hoặc dùng làm tiêu chuẩn đối chiếu.</li>
                 <li><strong>Xóa Bảng Dữ Liệu:</strong> Chọn một bảng từ menu, sau đó nhấn "Xóa Bảng Dữ Liệu Này".</li>
                 <li><strong>Thao tác trên bảng:</strong> Các nút "Thêm Hàng", "Lưu Thay Đổi", "Xuất Excel" đều sẽ làm việc trên bảng dữ liệu bạn đang chọn.</li>
+                <li><strong>Cột "Quy cách":</strong> Bạn có thể nhập số lượng quy cách (ví dụ: 30) trực tiếp vào cột này. Nhấn "Lưu Thay Đổi" để lưu giá trị này vào cơ sở dữ liệu.</li>
+                <li><strong>Nút "Xuất HD":</strong> Sau khi đã nhập "Quy cách", nhấn nút này để **hiện một bảng tính toán** giá bán đơn vị.</li>
             </ul>
              <h4>2. Kiểm Tra Đơn Hàng</h4>
             <ul>
@@ -173,15 +187,34 @@
                  <li><strong>Bước 2:</strong> Chọn file đơn hàng. Khu vực "Ánh Xạ Cột" cũng sẽ hiện ra để bạn chỉ định cột cho file đơn hàng.</li>
                  <li><strong>Bước 3:</strong> Nhấn "Xác Nhận & Kiểm Tra" và kết quả sẽ được hiển thị ở dưới cùng.</li>
             </ul>
-			 <h4>2. Chúng ta có thể upload nhiều file pdf hay ảnh lê gemini hay deepseek ( khuyến khích dùng GEMINI.COM ) </h4>
+			 <h4>2. Cách xuất file đơn hàng PDF từ DEEPSEEK AI </h4>
             <ul>
-                 <li><strong>Bước 1:</strong> Đăng nhập Gemini.com  bằng gmail của em- có thể dùng bản free vì nói xuất ra google sheet - down về excel nhanh hơn.</li>
+                 <li><strong>Bước 1:</strong> Đăng nhập Deepseek ai bằng gmail của em- có thể dùng sau này cho việc khác.</li>
                  <li><strong>Bước 2:</strong> Up các đơn hàng file pfd của chuỗi NT lên và viết prompt để AI lập bảng .</li>
                  <li><strong>File đơn LC đưa vào  </strong>  "Vui lòng viết lại bảng đơn hàng từ các file PDF đính kèm thàng bảng hàng cột gồm STT Mã - Tên sản phẩm - Giá xuất ( HD) VAT. Ghi chú đơn vị tính ví dụ: 300,000 chứ không phải 300.000, hãy viết chính xác mã, tên sản phẩm và giá . </li>
                <li><strong>File đơn PMC  đoạn sau vào </strong> "Vui lòng viết lại bảng đơn hàng từ các file PDF đính kèm thàng bảng hàng cột gồm  STT Mã (item product)  - Tên sản phẩm ( Product name) - Gía bán ( Unit price) - Chiết khấu ( Discount percent). Ghi chú đơn vị tính ví dụ: 300,000 chứ không phải 300.000,  chiết khấu là % .Hãy viết chính xác mã, tên sản phẩm và giá . </li>
             
 			
 			</ul>
+        </div>
+    </div>
+    
+    <div id="hdModal" class="modal">
+        <div class="modal-content" style="max-width: 1000px;"> <span class="close-btn" id="closeHdModal">&times;</span>
+            <h3>Bảng Giá Bán Đơn Vị (Xuất HD)</h3>
+            <div class="table-container" style="max-height: 500px;"> <table id="hdTable" style="width: 100%;">
+                    <thead>
+                        <tr>
+                            <th>Mã</th>
+                            <th>Tên sản phẩm</th>
+                            <th>Quy cách</th>
+                            <th>Giá bán đơn vị</th>
+                        </tr>
+                    </thead>
+                    <tbody id="hdTableBody">
+                        </tbody>
+                </table>
+            </div>
         </div>
     </div>
     
@@ -212,6 +245,7 @@
         const dataTableBody = document.querySelector('#dataTable tbody');
         const addRowBtn = document.getElementById('addRowBtn');
         const saveToFirebaseBtn = document.getElementById('saveToFirebaseBtn');
+        const exportHDBtn = document.getElementById('exportHDBtn'); 
         const exportExcelBtn = document.getElementById('exportExcelBtn');
         const clearDataBtn = document.getElementById('clearDataBtn');
         const uploadOrderInput = document.getElementById('uploadOrder');
@@ -229,29 +263,33 @@
         const helpBtn = document.getElementById('helpBtn');
         const helpModal = document.getElementById('helpModal');
         const closeHelpModal = document.getElementById('closeHelpModal');
+        
+        // ===== THAY ĐỔI 2: Khai báo biến cho modal HD mới =====
+        const hdModal = document.getElementById('hdModal');
+        const closeHdModal = document.getElementById('closeHdModal');
+        const hdTableBody = document.getElementById('hdTableBody');
 
         helpBtn.onclick = () => helpModal.classList.add('modal-show');
         closeHelpModal.onclick = () => helpModal.classList.remove('modal-show');
-        window.onclick = (event) => { if (event.target == helpModal) helpModal.classList.remove('modal-show'); };
+        
+        // ===== THAY ĐỔI 3: Thêm sự kiện đóng cho modal HD mới =====
+        closeHdModal.onclick = () => hdModal.classList.remove('modal-show');
+        
+        // Cập nhật window.onclick để đóng cả 2 modal
+        window.onclick = (event) => { 
+            if (event.target == helpModal) helpModal.classList.remove('modal-show');
+            if (event.target == hdModal) hdModal.classList.remove('modal-show');
+        };
 
-        /**
-         * THAY ĐỔI: Hàm helper mới để chuẩn hóa giá trị chiết khấu.
-         * Xử lý các trường hợp: 0.24, 24, "24%", "24" -> 24
-         */
         function getCKValue(row, mappingKey) {
             if (!mappingKey) return 0;
-            let val = row[mappingKey]; // Giá trị thô từ sheet_to_json
+            let val = row[mappingKey];
             if (val === undefined || val === null) return 0;
-
-            let num = parseFloat(val); // "24%" -> 24.  0.24 -> 0.24.  24 -> 24. "24" -> 24.
+            let num = parseFloat(val);
             if (isNaN(num)) return 0;
-
-            // Kiểm tra nếu giá trị *gốc* là kiểu SỐ và là dạng thập phân (ví dụ: 0.24 từ Excel)
             if (typeof val === 'number' && Math.abs(num) <= 1 && num !== 0) {
-                 return num * 100; // 0.24 -> 24
+                 return num * 100;
             }
-            
-            // Ngược lại, parseFloat đã xử lý đúng ("24%" -> 24) hoặc nó đã là số nguyên (24).
             return num;
         }
 
@@ -281,17 +319,17 @@
             const datasetKey = getSelectedDatasetKey();
             dataTableBody.innerHTML = '';
             if (!datasetKey) {
-                dataTableBody.innerHTML = '<tr><td colspan="7">Vui lòng chọn một bảng dữ liệu để xem.</td></tr>';
+                dataTableBody.innerHTML = '<tr><td colspan="8">Vui lòng chọn một bảng dữ liệu để xem.</td></tr>';
                 return;
             }
-            dataTableBody.innerHTML = `<tr><td colspan="7">Đang tải dữ liệu từ bảng "${datasetKey}"...</td></tr>`;
+            dataTableBody.innerHTML = `<tr><td colspan="8">Đang tải dữ liệu từ bảng "${datasetKey}"...</td></tr>`;
             masterDataRef.child(datasetKey).once('value', snapshot => {
                 const data = snapshot.val();
                 dataTableBody.innerHTML = '';
                 if (data && Array.isArray(data)) {
                     data.forEach(item => dataTableBody.appendChild(createTableRow(item)));
                 } else {
-                    dataTableBody.innerHTML = `<tr><td colspan="7">Bảng dữ liệu "${datasetKey}" không có dữ liệu.</td></tr>`;
+                    dataTableBody.innerHTML = `<tr><td colspan="8">Bảng dữ liệu "${datasetKey}" không có dữ liệu.</td></tr>`;
                 }
             });
         }
@@ -368,7 +406,8 @@
                     ten_sp: row[mapping.ten_sp] || '',
                     dvt: (mapping.dvt ? row[mapping.dvt] : '') || '',
                     gia_xuat: row[mapping.gia_xuat] || 0,
-                    chiet_khau: getCKValue(row, mapping.chiet_khau) // THAY ĐỔI: Dùng hàm chuẩn hóa
+                    chiet_khau: getCKValue(row, mapping.chiet_khau),
+                    quy_cach: 1 
                 }));
 
                 masterDataRef.child(mapping.datasetName).set(dataToSave).then(() => {
@@ -430,12 +469,12 @@
                         if (!orderMaSP) return;
                         
                         const orderGiaXuat = parseFloat(orderItem[mapping.gia_xuat] || 0);
-                        const orderChietKhau = getCKValue(orderItem, mapping.chiet_khau); // THAY ĐỔI: Dùng hàm chuẩn hóa
+                        const orderChietKhau = getCKValue(orderItem, mapping.chiet_khau); 
                         
                         if (masterDataMap.has(orderMaSP)) {
                             const masterItem = masterDataMap.get(orderMaSP);
                             const masterGia = parseFloat(masterItem.gia_xuat || 0);
-                            const masterCK = parseFloat(masterItem.chiet_khau || 0); // Dữ liệu gốc đã được chuẩn hóa
+                            const masterCK = parseFloat(masterItem.chiet_khau || 0); 
                             const masterTenSP = masterItem.ten_sp; 
 
                             const giaKhop = Math.abs(orderGiaXuat - masterGia) < 0.001;
@@ -468,7 +507,7 @@
                 });
             } catch (error) { alert("Đã có lỗi xảy ra: " + error.message); }
         });
-
+        
         clearDataBtn.addEventListener('click', () => {
             const datasetKey = getSelectedDatasetKey();
             if (!datasetKey) { alert("Vui lòng chọn một bảng dữ liệu để xóa."); return; }
@@ -491,10 +530,66 @@
                 return {
                     stt: cells[0].innerText, ma_sp: cells[1].innerText, ten_sp: cells[2].innerText,
                     dvt: cells[3].innerText, gia_xuat: parseFloat(cells[4].innerText.replace(/[.,]/g, '')) || 0,
-                    chiet_khau: parseFloat(cells[5].innerText.replace(/[.,%]/g, '')) || 0 // Logic này đã đúng, nó lột bỏ dấu %
+                    chiet_khau: parseFloat(cells[5].innerText.replace(/[.,%]/g, '')) || 0,
+                    quy_cach: parseInt(cells[6].innerText.replace(/[.,]/g, '')) || 1 
                 };
             });
             masterDataRef.child(datasetKey).set(dataToSave).then(() => alert(`Lưu thay đổi cho bảng "${datasetKey}" thành công!`));
+        });
+        
+        // ===== THAY ĐỔI 4: VIẾT LẠI HOÀN TOÀN hàm "Xuất HD" để hiện Modal =====
+        exportHDBtn.addEventListener('click', () => {
+            const datasetKey = getSelectedDatasetKey();
+            if (!datasetKey) { alert("Vui lòng chọn bảng dữ liệu để xuất HD."); return; }
+            const rows = dataTableBody.querySelectorAll('tr');
+            
+            if (rows.length === 0 || dataTableBody.querySelector('td[colspan="8"]')) { alert("Không có dữ liệu để tính toán!"); return; }
+
+            let htmlRows = ""; // Chuỗi HTML để chèn vào bảng
+
+            Array.from(rows).forEach(row => {
+                const cells = row.querySelectorAll('td');
+                try {
+                    const ma_sp = cells[1].innerText;
+                    const ten_sp = cells[2].innerText;
+                    const gia_goc = parseFloat(cells[4].innerText.replace(/[.,]/g, '')) || 0;
+                    const chiet_khau_percent = parseFloat(cells[5].innerText.replace(/[.,%]/g, '')) || 0;
+                    const quy_cach = parseInt(cells[6].innerText.replace(/[.,]/g, '')) || 1;
+
+                    if (quy_cach === 0) {
+                        return; // Bỏ qua nếu quy cách là 0 để tránh lỗi chia cho 0
+                    }
+
+                    let gia_ban_don_vi = 0;
+                    
+                    if (chiet_khau_percent > 0) {
+                        // Có chiết khấu
+                        const gia_sau_ck = gia_goc * (1 - (chiet_khau_percent / 100));
+                        gia_ban_don_vi = (gia_sau_ck / quy_cach) / 1.05;
+                    } else {
+                        // Không có chiết khấu
+                        gia_ban_don_vi = (gia_goc / quy_cach) / 1.05;
+                    }
+
+                    const gia_ban_don_vi_lam_tron = Math.round(gia_ban_don_vi);
+
+                    // Tạo một hàng của bảng (table row)
+                    htmlRows += `
+                        <tr>
+                            <td>${ma_sp}</td>
+                            <td>${ten_sp}</td>
+                            <td style="text-align: right;">${quy_cach.toLocaleString('vi-VN')}</td>
+                            <td style="text-align: right; font-weight: 600; color: var(--error-color);">${gia_ban_don_vi_lam_tron.toLocaleString('vi-VN')}</td>
+                        </tr>
+                    `;
+                } catch (e) {
+                    console.error("Lỗi khi xử lý hàng: ", row, e);
+                }
+            });
+
+            // Đưa dữ liệu vào tbody của modal và hiển thị modal
+            hdTableBody.innerHTML = htmlRows;
+            hdModal.classList.add('modal-show');
         });
 
         addRowBtn.addEventListener('click', () => {
@@ -506,7 +601,7 @@
             const datasetKey = getSelectedDatasetKey();
             if (!datasetKey) { alert("Vui lòng chọn bảng dữ liệu để xuất."); return; }
             const rows = dataTableBody.querySelectorAll('tr');
-            if (rows.length === 0 || dataTableBody.querySelector('td[colspan="7"]')) { alert("Không có dữ liệu để xuất!"); return; }
+            if (rows.length === 0 || dataTableBody.querySelector('td[colspan="8"]')) { alert("Không có dữ liệu để xuất!"); return; }
             const data = Array.from(rows).map(row => {
                 const cells = row.querySelectorAll('td');
                 return { 
@@ -515,7 +610,8 @@
                     'Tên sản phẩm': cells[2].innerText, 
                     'ĐVT': cells[3].innerText, 
                     'Giá xuất HĐ (sau VAT)': cells[4].innerText,
-                    'Chiết khấu (%)': cells[5].innerText // Logic này đã đúng, nó xuất "24%"
+                    'Chiết khấu (%)': cells[5].innerText,
+                    'Quy cách': cells[6].innerText 
                 };
             });
             const ws = XLSX.utils.json_to_sheet(data);
@@ -526,8 +622,8 @@
 
         function createTableRow(item, isNew = false) {
             const row = document.createElement('tr');
-            // THAY ĐỔI: Thêm dấu '%' vào cột chiết khấu khi hiển thị
-            row.innerHTML = `<td contenteditable="${isNew}">${item.stt||''}</td><td contenteditable="true">${item.ma_sp||''}</td><td contenteditable="true">${item.ten_sp||''}</td><td contenteditable="true">${item.dvt||''}</td><td contenteditable="true">${item.gia_xuat!=null?Number(item.gia_xuat).toLocaleString('vi-VN'):''}</td><td contenteditable="true">${item.chiet_khau!=null?Number(item.chiet_khau).toLocaleString('vi-VN') + '%':''}</td><td><button class="delete-btn">Xóa</button></td>`;
+            // Thêm ô <td> cho 'quy_cach', mặc định là 1 nếu không có
+            row.innerHTML = `<td contenteditable="${isNew}">${item.stt||''}</td><td contenteditable="true">${item.ma_sp||''}</td><td contenteditable="true">${item.ten_sp||''}</td><td contenteditable="true">${item.dvt||''}</td><td contenteditable="true">${item.gia_xuat!=null?Number(item.gia_xuat).toLocaleString('vi-VN'):''}</td><td contenteditable="true">${item.chiet_khau!=null?Number(item.chiet_khau).toLocaleString('vi-VN') + '%':''}</td><td contenteditable="true">${item.quy_cach || '1'}</td><td><button class="delete-btn">Xóa</button></td>`;
             row.querySelector('.delete-btn').addEventListener('click', () => row.remove());
             return row;
         }
@@ -541,7 +637,3 @@
     </script>
 </body>
 </html>
-
-
-
-
