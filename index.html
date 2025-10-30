@@ -69,12 +69,15 @@
         #helpBtn { position: absolute; top: 32px; right: 32px; background-color: #ffab00; font-size: 14px; padding: 8px 16px; z-index: 5; }
         #helpBtn:hover { background-color: #ff9900; }
         @keyframes fadeIn { from {opacity: 0; transform: scale(0.95);} to {opacity: 1; transform: scale(1);} }
+        .auto-check-info { background: #d1ecf1; border: 1px solid #bee5eb; padding: 10px; border-radius: 4px; margin: 10px 0; }
+        .checking-animation { display: inline-block; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
     </style>
 </head>
 <body>
     <div class="container">
         <button id="helpBtn">❓ Hướng Dẫn</button>
-        <h1>Trình Kiểm Tra Đơn Hàng Gía - IDECO</h1>
+        <h1>Trình Kiểm Tra Đơn Hàng Giá - IDECO</h1>
         
         <h2>Quản lý Dữ liệu Chuẩn</h2>
         <div class="selector-wrapper">
@@ -137,6 +140,16 @@
          <div class="selector-wrapper">
              <label class="label">Đối chiếu với bảng: "<b id="currentDatasetName" style="color:var(--primary-color)">...</b>"</label>
         </div>
+        
+        <div class="auto-check-info">
+            <strong>🔍 KIỂM TRA THÔNG MINH:</strong> Ứng dụng sẽ tự động dò theo Mã SP và Tên sản phẩm để kiểm tra:
+            <ul>
+                <li>✅ <strong>Giá xuất HĐ:</strong> So sánh chính xác giá trong đơn hàng với bảng dữ liệu chuẩn</li>
+                <li>✅ <strong>Chiết khấu:</strong> Kiểm tra % chiết khấu nếu có trong đơn hàng</li>
+                <li>🎯 <strong>Tự động nhận diện:</strong> Dựa vào ánh xạ cột bạn chọn để kiểm tra kỹ lưỡng từng sản phẩm</li>
+            </ul>
+        </div>
+
         <div class="controls">
              <label for="uploadOrder" class="file-upload">
                 <span>📂 Tải lên file Đơn Hàng</span>
@@ -155,8 +168,9 @@
                  <button id="cancelOrderMappingBtn" class="secondary-btn">Hủy</button>
             </div>
         </div>
+        
         <div id="resultContainer" class="hidden">
-            <h2>Kết Quả Kiểm Tra</h2>
+            <h2>Kết Quả Kiểm Tra <span id="checkingStatus"></span></h2>
             <div id="results"></div>
         </div>
     </div>
@@ -175,27 +189,19 @@
                         <li>Nhập tên cho bảng dữ liệu mới và nhấn "Xác Nhận & Lưu".</li>
                     </ol>
                 </li>
-                 <li><strong>Chọn Bảng Dữ Liệu:</strong> Dùng menu thả xuống để xem, sửa, hoặc dùng làm tiêu chuẩn đối chiếu.</li>
-                <li><strong>Xóa Bảng Dữ Liệu:</strong> Chọn một bảng từ menu, sau đó nhấn "Xóa Bảng Dữ Liệu Này".</li>
-                <li><strong>Thao tác trên bảng:</strong> Các nút "Thêm Hàng", "Lưu Thay Đổi", "Xuất Excel" đều sẽ làm việc trên bảng dữ liệu bạn đang chọn.</li>
-                <li><strong>Cột "Quy cách":</strong> Bạn có thể nhập số lượng quy cách (ví dụ: 30) trực tiếp vào cột này. Nhấn "Lưu Thay Đổi" để lưu giá trị này vào cơ sở dữ liệu.</li>
-                <li><strong>Nút "Xuất HD":</strong> Sau khi đã nhập "Quy cách", nhấn nút này để **hiện một bảng tính toán** giá bán đơn vị.</li>
             </ul>
              <h4>2. Kiểm Tra Đơn Hàng</h4>
             <ul>
-                 <li><strong>Bước 1:</strong> Dùng menu thả xuống để chọn đúng Bảng Dữ Liệu Chuẩn bạn muốn dùng để đối chiếu.</li>
-                 <li><strong>Bước 2:</strong> Chọn file đơn hàng. Khu vực "Ánh Xạ Cột" cũng sẽ hiện ra để bạn chỉ định cột cho file đơn hàng.</li>
-                 <li><strong>Bước 3:</strong> Nhấn "Xác Nhận & Kiểm Tra" và kết quả sẽ được hiển thị ở dưới cùng.</li>
+                 <li><strong>Bước 1:</strong> Chọn bảng dữ liệu chuẩn để đối chiếu</li>
+                 <li><strong>Bước 2:</strong> Tải file đơn hàng và ánh xạ cột chính xác</li>
+                 <li><strong>Bước 3:</strong> Ứng dụng sẽ <strong>TỰ ĐỘNG KIỂM TRA KỸ LƯỠNG</strong>:
+                     <ul>
+                         <li>So sánh giá theo Mã SP và Tên sản phẩm</li>
+                         <li>Kiểm tra chiết khấu nếu có trong đơn hàng</li>
+                         <li>Báo kết quả chi tiết: ĐÚNG/SAI cho từng sản phẩm</li>
+                     </ul>
+                 </li>
             </ul>
-			 <h4>2. Cách xuất file đơn hàng PDF từ DEEPSEEK AI </h4>
-            <ul>
-                 <li><strong>Bước 1:</strong> Đăng nhập Deepseek ai bằng gmail của em- có thể dùng sau này cho việc khác.</li>
-                 <li><strong>Bước 2:</strong> Up các đơn hàng file pfd của chuỗi NT lên và viết prompt để AI lập bảng .</li>
-                 <li><strong>File đơn LC đưa vào  </strong>  "Vui lòng viết lại bảng đơn hàng từ các file PDF đính kèm thàng bảng hàng cột gồm STT Mã - Tên sản phẩm - Giá xuất ( HD) VAT. Ghi chú đơn vị tính ví dụ: 300,000 chứ không phải 300.000, hãy viết chính xác mã, tên sản phẩm và giá . </li>
-               <li><strong>File đơn PMC  đoạn sau vào </strong> "Vui lòng viết lại bảng đơn hàng từ các file PDF đính kèm thàng bảng hàng cột gồm  STT Mã (item product)  - Tên sản phẩm ( Product name) - Gía bán ( Unit price) - Chiết khấu ( Discount percent). Ghi chú đơn vị tính ví dụ: 300,000 chứ không phải 300.000,  chiết khấu là % .Hãy viết chính xác mã, tên sản phẩm và giá . </li>
-            
-			
-			</ul>
         </div>
     </div>
     
@@ -222,22 +228,23 @@
     <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-database.js"></script>
 
     <script>
-         const firebaseConfig = {
-  apiKey: "AIzaSyDtxpm3ZGde1Zl0BtTalGAsY9XFGQyncjQ",
-  authDomain: "kiemtradon.firebaseapp.com",
-  databaseURL: "https://kiemtradon-default-rtdb.firebaseio.com",
-  projectId: "kiemtradon",
-  storageBucket: "kiemtradon.firebasestorage.app",
-  messagingSenderId: "113183972853",
-  appId: "1:113183972853:web:5ecbd594ef8a5154d214bc",
-  measurementId: "G-N59VCM3QJF"
-};
+        const firebaseConfig = {
+            apiKey: "AIzaSyDtxpm3ZGde1Zl0BtTalGAsY9XFGQyncjQ",
+            authDomain: "kiemtradon.firebaseapp.com",
+            databaseURL: "https://kiemtradon-default-rtdb.firebaseio.com",
+            projectId: "kiemtradon",
+            storageBucket: "kiemtradon.firebasestorage.app",
+            messagingSenderId: "113183972853",
+            appId: "1:113183972853:web:5ecbd594ef8a5154d214bc",
+            measurementId: "G-N59VCM3QJF"
+        };
 
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
         const masterDataRef = database.ref('du_lieu_goc');
 
         let tempJsonData = null;
+        let currentMasterData = null;
 
         const datasetSelector = document.getElementById('datasetSelector');
         const currentDatasetNameSpan = document.getElementById('currentDatasetName');
@@ -251,6 +258,7 @@
         const uploadOrderInput = document.getElementById('uploadOrder');
         const resultsDiv = document.getElementById('results');
         const resultContainer = document.getElementById('resultContainer');
+        const checkingStatus = document.getElementById('checkingStatus');
         
         const mappingSection = document.getElementById('mappingSection');
         const confirmMappingBtn = document.getElementById('confirmMappingBtn');
@@ -264,31 +272,37 @@
         const helpModal = document.getElementById('helpModal');
         const closeHelpModal = document.getElementById('closeHelpModal');
         
-        // ===== THAY ĐỔI 2: Khai báo biến cho modal HD mới =====
         const hdModal = document.getElementById('hdModal');
         const closeHdModal = document.getElementById('closeHdModal');
         const hdTableBody = document.getElementById('hdTableBody');
 
         helpBtn.onclick = () => helpModal.classList.add('modal-show');
         closeHelpModal.onclick = () => helpModal.classList.remove('modal-show');
-        
-        // ===== THAY ĐỔI 3: Thêm sự kiện đóng cho modal HD mới =====
         closeHdModal.onclick = () => hdModal.classList.remove('modal-show');
         
-        // Cập nhật window.onclick để đóng cả 2 modal
         window.onclick = (event) => { 
             if (event.target == helpModal) helpModal.classList.remove('modal-show');
             if (event.target == hdModal) hdModal.classList.remove('modal-show');
         };
 
+        function showCheckingStatus(message) {
+            checkingStatus.innerHTML = `<span class="checking-animation">${message}</span>`;
+        }
+
+        function hideCheckingStatus() {
+            checkingStatus.innerHTML = '';
+        }
+
         function getCKValue(row, mappingKey) {
-            if (!mappingKey) return 0;
+            if (!mappingKey || !row[mappingKey]) return 0;
             let val = row[mappingKey];
-            if (val === undefined || val === null) return 0;
-            let num = parseFloat(val);
+            if (val === undefined || val === null || val === '') return 0;
+            
+            let num = parseFloat(String(val).replace(/[%,]/g, ''));
             if (isNaN(num)) return 0;
-            if (typeof val === 'number' && Math.abs(num) <= 1 && num !== 0) {
-                 return num * 100;
+            
+            if (num < 1 && num > 0) {
+                return num * 100;
             }
             return num;
         }
@@ -320,11 +334,13 @@
             dataTableBody.innerHTML = '';
             if (!datasetKey) {
                 dataTableBody.innerHTML = '<tr><td colspan="8">Vui lòng chọn một bảng dữ liệu để xem.</td></tr>';
+                currentMasterData = null;
                 return;
             }
             dataTableBody.innerHTML = `<tr><td colspan="8">Đang tải dữ liệu từ bảng "${datasetKey}"...</td></tr>`;
             masterDataRef.child(datasetKey).once('value', snapshot => {
                 const data = snapshot.val();
+                currentMasterData = data;
                 dataTableBody.innerHTML = '';
                 if (data && Array.isArray(data)) {
                     data.forEach(item => dataTableBody.appendChild(createTableRow(item)));
@@ -360,7 +376,9 @@
                     if (selects.mapOrderCK) selects.mapOrderCK.innerHTML = noneOption + selects.mapOrderCK.innerHTML;
 
                     section.classList.remove('hidden');
-                } catch (err) { alert("Lỗi khi đọc file: " + err.message); }
+                } catch (err) { 
+                    alert("Lỗi khi đọc file: " + err.message); 
+                }
             };
             reader.readAsArrayBuffer(file);
         }
@@ -402,10 +420,10 @@
 
                 const dataToSave = tempJsonData.map((row, index) => ({
                     stt: (mapping.stt ? row[mapping.stt] : (index + 1)) || (index + 1),
-                    ma_sp: row[mapping.ma_sp] || '',
-                    ten_sp: row[mapping.ten_sp] || '',
-                    dvt: (mapping.dvt ? row[mapping.dvt] : '') || '',
-                    gia_xuat: row[mapping.gia_xuat] || 0,
+                    ma_sp: String(row[mapping.ma_sp] || '').trim(),
+                    ten_sp: String(row[mapping.ten_sp] || '').trim(),
+                    dvt: (mapping.dvt ? String(row[mapping.dvt] || '') : ''),
+                    gia_xuat: parseFloat(row[mapping.gia_xuat]) || 0,
                     chiet_khau: getCKValue(row, mapping.chiet_khau),
                     quy_cach: 1 
                 }));
@@ -418,7 +436,9 @@
                     cancelMappingBtn.click();
                 }).catch(err => { throw new Error("Lỗi khi lưu vào Firebase: " + err.message); });
 
-            } catch(error) { alert("Đã có lỗi xảy ra: " + error.message); }
+            } catch(error) { 
+                alert("Đã có lỗi xảy ra: " + error.message); 
+            }
         });
 
         uploadOrderInput.addEventListener('change', (event) => {
@@ -456,57 +476,138 @@
                 if (!tempJsonData) throw new Error("Không có dữ liệu file tạm thời. Vui lòng thử lại.");
 
                 const datasetKey = getSelectedDatasetKey();
-                masterDataRef.child(datasetKey).once('value', snapshot => {
-                    const masterData = snapshot.val();
-                    if (!masterData) { alert(`Bảng dữ liệu "${datasetKey}" không có dữ liệu.`); return; }
+                
+                showCheckingStatus("🔄 Đang kiểm tra...");
+                resultContainer.classList.remove('hidden');
 
-                    const masterDataMap = new Map();
-                    masterData.forEach(item => { if (item.ma_sp) masterDataMap.set(String(item.ma_sp).trim(), item); });
-
-                    const correctItems = [], incorrectItems = [];
-                    tempJsonData.forEach(orderItem => {
-                        const orderMaSP = String(orderItem[mapping.ma_sp] || '').trim();
-                        if (!orderMaSP) return;
-                        
-                        const orderGiaXuat = parseFloat(orderItem[mapping.gia_xuat] || 0);
-                        const orderChietKhau = getCKValue(orderItem, mapping.chiet_khau); 
-                        
-                        if (masterDataMap.has(orderMaSP)) {
-                            const masterItem = masterDataMap.get(orderMaSP);
-                            const masterGia = parseFloat(masterItem.gia_xuat || 0);
-                            const masterCK = parseFloat(masterItem.chiet_khau || 0); 
-                            const masterTenSP = masterItem.ten_sp; 
-
-                            const giaKhop = Math.abs(orderGiaXuat - masterGia) < 0.001;
-                            const ckKhop = !mapping.chiet_khau || (Math.abs(orderChietKhau - masterCK) < 0.001);
-
-                            if (giaKhop && ckKhop) {
-                                let msg = `<li><b>${orderMaSP} - ${masterTenSP}</b>: Đúng giá (${orderGiaXuat.toLocaleString('vi-VN')} VNĐ)`;
-                                if (mapping.chiet_khau) msg += ` & CK (${orderChietKhau.toLocaleString('vi-VN')}%)`;
-                                msg += `</li>`;
-                                correctItems.push(msg);
-                            } else {
-                                let errorMsg = `<li><b>${orderMaSP} - ${masterTenSP}</b>: `;
-                                if (!giaKhop) {
-                                    const chenhLech = orderGiaXuat - masterGia;
-                                    errorMsg += `<span style="font-weight:bold; color:var(--error-color);">SAI GIÁ</span>. ĐH: ${orderGiaXuat.toLocaleString('vi-VN')} đ, Gốc: ${masterGia.toLocaleString('vi-VN')} đ. (Lệch: ${chenhLech.toLocaleString('vi-VN')} đ)`;
-                                }
-                                if (!ckKhop) {
-                                    if (!giaKhop) errorMsg += " / ";
-                                    errorMsg += `<span style="font-weight:bold; color:var(--error-color);">SAI CK</span>. ĐH: ${orderChietKhau.toLocaleString('vi-VN')}%, Gốc: ${masterCK.toLocaleString('vi-VN')}%`;
-                                }
-                                errorMsg += `</li>`;
-                                incorrectItems.push(errorMsg);
-                            }
-                        } else {
-                            incorrectItems.push(`<li><b>${orderMaSP} - ${orderItem[mapping.ten_sp] || ''}</b>: Không tìm thấy MÃ SP.</li>`);
-                        }
+                if (!currentMasterData) {
+                    masterDataRef.child(datasetKey).once('value', snapshot => {
+                        currentMasterData = snapshot.val();
+                        performOrderCheck(mapping, datasetKey);
                     });
-                    displayResults(correctItems, incorrectItems);
-                    cancelOrderMappingBtn.click();
-                });
-            } catch (error) { alert("Đã có lỗi xảy ra: " + error.message); }
+                } else {
+                    performOrderCheck(mapping, datasetKey);
+                }
+
+            } catch (error) { 
+                alert("Đã có lỗi xảy ra: " + error.message); 
+                hideCheckingStatus();
+            }
         });
+
+        function performOrderCheck(mapping, datasetKey) {
+            if (!currentMasterData) {
+                alert(`Bảng dữ liệu "${datasetKey}" không có dữ liệu.`);
+                hideCheckingStatus();
+                return;
+            }
+
+            // Tạo map từ dữ liệu master để dễ dàng tra cứu
+            const masterDataMap = new Map();
+            currentMasterData.forEach(item => { 
+                if (item.ma_sp) {
+                    const maSP = String(item.ma_sp).trim().toLowerCase();
+                    const tenSP = String(item.ten_sp || '').trim().toLowerCase();
+                    const key = `${maSP}_${tenSP}`;
+                    masterDataMap.set(key, item);
+                }
+            });
+
+            const correctItems = [], incorrectItems = [];
+            let totalChecked = 0;
+            
+            tempJsonData.forEach((orderItem, index) => {
+                const orderMaSP = String(orderItem[mapping.ma_sp] || '').trim();
+                const orderTenSP = String(orderItem[mapping.ten_sp] || '').trim();
+                
+                if (!orderMaSP) {
+                    return;
+                }
+                
+                totalChecked++;
+                
+                const orderGiaXuat = parseFloat(orderItem[mapping.gia_xuat]) || 0;
+                const orderChietKhau = getCKValue(orderItem, mapping.chiet_khau);
+
+                // Tìm sản phẩm trong master theo mã và tên
+                const searchKey = `${orderMaSP.toLowerCase()}_${orderTenSP.toLowerCase()}`;
+                let masterItem = masterDataMap.get(searchKey);
+                
+                // Nếu không tìm thấy theo cả mã và tên, thử tìm chỉ theo mã
+                if (!masterItem) {
+                    for (let [key, item] of masterDataMap) {
+                        if (key.startsWith(orderMaSP.toLowerCase() + '_')) {
+                            masterItem = item;
+                            break;
+                        }
+                    }
+                }
+
+                if (masterItem) {
+                    const masterGia = parseFloat(masterItem.gia_xuat || 0);
+                    const masterCK = parseFloat(masterItem.chiet_khau || 0);
+                    const masterTenSP = masterItem.ten_sp;
+
+                    // Kiểm tra giá
+                    const giaKhop = Math.abs(orderGiaXuat - masterGia) < 100;
+                    
+                    // Kiểm tra chiết khấu (nếu có trong đơn hàng)
+                    let ckKhop = true;
+                    let hasCKInOrder = mapping.chiet_khau && orderChietKhau > 0;
+                    if (hasCKInOrder) {
+                        ckKhop = Math.abs(orderChietKhau - masterCK) < 0.1;
+                    }
+
+                    if (giaKhop && ckKhop) {
+                        let msg = `<li><b>${orderMaSP} - ${masterTenSP}</b>: `;
+                        msg += `✅ <strong>GIÁ ĐÚNG</strong> (${orderGiaXuat.toLocaleString('vi-VN')} VNĐ)`;
+                        if (hasCKInOrder) {
+                            msg += ` & ✅ <strong>CHIẾT KHẤU ĐÚNG</strong> (${orderChietKhau.toLocaleString('vi-VN')}%)`;
+                        }
+                        msg += `</li>`;
+                        correctItems.push(msg);
+                    } else {
+                        let errorMsg = `<li><b>${orderMaSP} - ${masterTenSP}</b>: `;
+                        let errors = [];
+                        
+                        if (!giaKhop) {
+                            errors.push(`❌ <strong style="color:var(--error-color);">SAI GIÁ</strong> (ĐH: ${orderGiaXuat.toLocaleString('vi-VN')} đ vs Gốc: ${masterGia.toLocaleString('vi-VN')} đ)`);
+                        }
+                        
+                        if (hasCKInOrder && !ckKhop) {
+                            errors.push(`❌ <strong style="color:var(--error-color);">SAI CHIẾT KHẤU</strong> (ĐH: ${orderChietKhau.toLocaleString('vi-VN')}% vs Gốc: ${masterCK.toLocaleString('vi-VN')}%)`);
+                        }
+                        
+                        errorMsg += errors.join(' | ') + `</li>`;
+                        incorrectItems.push(errorMsg);
+                    }
+                } else {
+                    incorrectItems.push(`<li><b>${orderMaSP} - ${orderTenSP}</b>: ❌ <strong style="color:var(--error-color);">KHÔNG TÌM THẤY</strong> trong bảng dữ liệu.</li>`);
+                }
+            });
+
+            displayResults(correctItems, incorrectItems, totalChecked);
+            cancelOrderMappingBtn.click();
+            hideCheckingStatus();
+        }
+        
+        function displayResults(correct, incorrect, totalChecked) {
+            const correctCount = correct.length;
+            const incorrectCount = incorrect.length;
+            
+            let resultsHTML = `
+                <div class="result-section correct">
+                    <h3 style="color: var(--success-color);">✅ ĐÚNG (${correctCount}/${totalChecked})</h3>
+                    <ul>${correct.length>0 ? correct.join('') : '<li>Không có sản phẩm nào đúng.</li>'}</ul>
+                </div>
+                <div class="result-section incorrect">
+                    <h3 style="color: var(--error-color);">❌ SAI / KHÔNG TÌM THẤY (${incorrectCount}/${totalChecked})</h3>
+                    <ul>${incorrect.length>0 ? incorrect.join('') : '<li>Không có sản phẩm nào sai.</li>'}</ul>
+                </div>
+            `;
+            
+            resultsDiv.innerHTML = resultsHTML;
+        }
         
         clearDataBtn.addEventListener('click', () => {
             const datasetKey = getSelectedDatasetKey();
@@ -528,16 +629,20 @@
             const dataToSave = Array.from(rows).map(row => {
                 const cells = row.querySelectorAll('td');
                 return {
-                    stt: cells[0].innerText, ma_sp: cells[1].innerText, ten_sp: cells[2].innerText,
-                    dvt: cells[3].innerText, gia_xuat: parseFloat(cells[4].innerText.replace(/[.,]/g, '')) || 0,
+                    stt: cells[0].innerText, 
+                    ma_sp: cells[1].innerText, 
+                    ten_sp: cells[2].innerText,
+                    dvt: cells[3].innerText, 
+                    gia_xuat: parseFloat(cells[4].innerText.replace(/[.,]/g, '')) || 0,
                     chiet_khau: parseFloat(cells[5].innerText.replace(/[.,%]/g, '')) || 0,
                     quy_cach: parseInt(cells[6].innerText.replace(/[.,]/g, '')) || 1 
                 };
             });
-            masterDataRef.child(datasetKey).set(dataToSave).then(() => alert(`Lưu thay đổi cho bảng "${datasetKey}" thành công!`));
+            masterDataRef.child(datasetKey).set(dataToSave).then(() => {
+                alert(`Lưu thay đổi cho bảng "${datasetKey}" thành công!`);
+            });
         });
         
-        // ===== THAY ĐỔI 4: VIẾT LẠI HOÀN TOÀN hàm "Xuất HD" để hiện Modal =====
         exportHDBtn.addEventListener('click', () => {
             const datasetKey = getSelectedDatasetKey();
             if (!datasetKey) { alert("Vui lòng chọn bảng dữ liệu để xuất HD."); return; }
@@ -545,7 +650,7 @@
             
             if (rows.length === 0 || dataTableBody.querySelector('td[colspan="8"]')) { alert("Không có dữ liệu để tính toán!"); return; }
 
-            let htmlRows = ""; // Chuỗi HTML để chèn vào bảng
+            let htmlRows = "";
 
             Array.from(rows).forEach(row => {
                 const cells = row.querySelectorAll('td');
@@ -556,24 +661,19 @@
                     const chiet_khau_percent = parseFloat(cells[5].innerText.replace(/[.,%]/g, '')) || 0;
                     const quy_cach = parseInt(cells[6].innerText.replace(/[.,]/g, '')) || 1;
 
-                    if (quy_cach === 0) {
-                        return; // Bỏ qua nếu quy cách là 0 để tránh lỗi chia cho 0
-                    }
+                    if (quy_cach === 0) return;
 
                     let gia_ban_don_vi = 0;
                     
                     if (chiet_khau_percent > 0) {
-                        // Có chiết khấu
                         const gia_sau_ck = gia_goc * (1 - (chiet_khau_percent / 100));
                         gia_ban_don_vi = (gia_sau_ck / quy_cach) / 1.05;
                     } else {
-                        // Không có chiết khấu
                         gia_ban_don_vi = (gia_goc / quy_cach) / 1.05;
                     }
 
                     const gia_ban_don_vi_lam_tron = Math.round(gia_ban_don_vi);
 
-                    // Tạo một hàng của bảng (table row)
                     htmlRows += `
                         <tr>
                             <td>${ma_sp}</td>
@@ -587,7 +687,6 @@
                 }
             });
 
-            // Đưa dữ liệu vào tbody của modal và hiển thị modal
             hdTableBody.innerHTML = htmlRows;
             hdModal.classList.add('modal-show');
         });
@@ -622,18 +721,14 @@
 
         function createTableRow(item, isNew = false) {
             const row = document.createElement('tr');
-            // Thêm ô <td> cho 'quy_cach', mặc định là 1 nếu không có
             row.innerHTML = `<td contenteditable="${isNew}">${item.stt||''}</td><td contenteditable="true">${item.ma_sp||''}</td><td contenteditable="true">${item.ten_sp||''}</td><td contenteditable="true">${item.dvt||''}</td><td contenteditable="true">${item.gia_xuat!=null?Number(item.gia_xuat).toLocaleString('vi-VN'):''}</td><td contenteditable="true">${item.chiet_khau!=null?Number(item.chiet_khau).toLocaleString('vi-VN') + '%':''}</td><td contenteditable="true">${item.quy_cach || '1'}</td><td><button class="delete-btn">Xóa</button></td>`;
             row.querySelector('.delete-btn').addEventListener('click', () => row.remove());
             return row;
         }
 
-        function displayResults(correct, incorrect) {
-            resultContainer.classList.remove('hidden');
-            resultsDiv.innerHTML = `<div class="result-section correct"><h3 style="color: var(--success-color);">✅ ĐÚNG (${correct.length})</h3><ul>${correct.length>0?correct.join(''):'<li>Không có.</li>'}</ul></div><div class="result-section incorrect"><h3 style="color: var(--error-color);">❌ SAI / KHÔNG TÌM THẤY (${incorrect.length})</h3><ul>${incorrect.length>0?incorrect.join(''):'<li>Không có.</li>'}</ul></div>`;
-        }
-
-        document.addEventListener('DOMContentLoaded', populateDatasetSelector);
+        document.addEventListener('DOMContentLoaded', () => {
+            populateDatasetSelector();
+        });
     </script>
 </body>
 </html>
