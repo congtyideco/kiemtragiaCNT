@@ -69,15 +69,86 @@
         #helpBtn { position: absolute; top: 32px; right: 32px; background-color: #ffab00; font-size: 14px; padding: 8px 16px; z-index: 5; }
         #helpBtn:hover { background-color: #ff9900; }
         @keyframes fadeIn { from {opacity: 0; transform: scale(0.95);} to {opacity: 1; transform: scale(1);} }
-        .auto-check-info { background: #d1ecf1; border: 1px solid #bee5eb; padding: 10px; border-radius: 4px; margin: 10px 0; }
-        .checking-animation { display: inline-block; animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+
+        /* STYLE MỚI CHO TÍNH NĂNG DÁN DỮ LIỆU */
+        .paste-area {
+            border: 2px dashed var(--border-color);
+            border-radius: 5px;
+            padding: 16px;
+            background: #fafbfc;
+            margin-top: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .paste-area:hover {
+            border-color: var(--primary-color);
+            background-color: #f0f6ff;
+        }
+        .paste-area textarea {
+            width: 100%;
+            height: 120px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 12px;
+            font-family: 'Be Vietnam Pro', sans-serif;
+            font-size: 14px;
+            resize: vertical;
+        }
+        .paste-area textarea:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(0, 82, 204, 0.2);
+        }
+        .paste-instruction {
+            font-size: 13px;
+            color: var(--secondary-color);
+            margin-top: 8px;
+        }
+        .tab-buttons {
+            display: flex;
+            margin-bottom: 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .tab-button {
+            padding: 10px 20px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--secondary-color);
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+        }
+        .tab-button.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .preview-table {
+            margin-top: 16px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .warning-note {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 4px;
+            padding: 12px;
+            margin: 12px 0;
+            font-size: 14px;
+            color: #856404;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <button id="helpBtn">❓ Hướng Dẫn</button>
-        <h1>Trình Kiểm Tra Đơn Hàng Giá - IDECO</h1>
+        <h1>Trình Kiểm Tra Đơn Hàng Gía - IDECO</h1>
         
         <h2>Quản lý Dữ liệu Chuẩn</h2>
         <div class="selector-wrapper">
@@ -140,25 +211,44 @@
          <div class="selector-wrapper">
              <label class="label">Đối chiếu với bảng: "<b id="currentDatasetName" style="color:var(--primary-color)">...</b>"</label>
         </div>
-        
-        <div class="auto-check-info">
-            <strong>🔍 KIỂM TRA THÔNG MINH:</strong> Ứng dụng sẽ tự động dò theo Mã SP và Tên sản phẩm để kiểm tra:
-            <ul>
-                <li>✅ <strong>Giá xuất HĐ:</strong> So sánh chính xác giá trong đơn hàng với bảng dữ liệu chuẩn</li>
-                <li>✅ <strong>Chiết khấu:</strong> Kiểm tra % chiết khấu nếu có trong đơn hàng</li>
-                <li>🎯 <strong>Tự động nhận diện:</strong> Dựa vào ánh xạ cột bạn chọn để kiểm tra kỹ lưỡng từng sản phẩm</li>
-            </ul>
+
+        <!-- TABS CHO UPLOAD VÀ PASTE -->
+        <div class="tab-buttons">
+            <button class="tab-button active" data-tab="upload-tab">📂 Tải File Lên</button>
+            <button class="tab-button" data-tab="paste-tab">📋 Dán Dữ Liệu</button>
         </div>
 
-        <div class="controls">
-             <label for="uploadOrder" class="file-upload">
-                <span>📂 Tải lên file Đơn Hàng</span>
-                <input type="file" id="uploadOrder" accept=".xlsx, .xls, .csv">
-            </label>
+        <div class="tab-content active" id="upload-tab">
+            <div class="controls">
+                 <label for="uploadOrder" class="file-upload">
+                    <span>📂 Tải lên file Đơn Hàng</span>
+                    <input type="file" id="uploadOrder" accept=".xlsx, .xls, .csv">
+                </label>
+            </div>
+        </div>
+
+        <div class="tab-content" id="paste-tab">
+            <div class="controls">
+                <div class="paste-area">
+                    <label><strong>📋 Dán dữ liệu từ Excel/Google Sheets:</strong></label>
+                    <textarea id="pasteData" placeholder="Dán dữ liệu bảng tính vào đây (bao gồm cả tiêu đề cột)...
+Ví dụ:
+STT	Mã sản phẩm	Tên sản phẩm	Giá
+1	SP001	Sản phẩm A	100,000
+2	SP002	Sản phẩm B	200,000"></textarea>
+                    <div class="paste-instruction">
+                        💡 <strong>Hướng dẫn:</strong> Copy toàn bộ bảng từ Excel hoặc Google Sheets (bao gồm cả dòng tiêu đề) và dán vào ô trên.
+                    </div>
+                </div>
+                <button id="processPasteBtn" class="success-btn" style="margin-top: 12px;">🔍 Xử Lý & Ánh Xạ Cột</button>
+            </div>
         </div>
 
         <div id="mappingOrderSection" class="hidden">
              <h3>Bước 2: Ánh xạ cột cho file Đơn Hàng</h3>
+             <div class="warning-note">
+                 <strong>💡 Lưu ý:</strong> Hệ thống tự động chuẩn hóa mã sản phẩm (loại bỏ số 0 ở đầu) để so sánh. Ví dụ: "00500321" → "500321"
+             </div>
              <div class="mapping-row"><label for="mapOrderMaSP">Cột Mã SP (*):</label><select id="mapOrderMaSP"></select></div>
              <div class="mapping-row"><label for="mapOrderTenSP">Cột Tên sản phẩm (*):</label><select id="mapOrderTenSP"></select></div>
              <div class="mapping-row"><label for="mapOrderGia">Cột Giá (*):</label><select id="mapOrderGia"></select></div>
@@ -168,9 +258,8 @@
                  <button id="cancelOrderMappingBtn" class="secondary-btn">Hủy</button>
             </div>
         </div>
-        
         <div id="resultContainer" class="hidden">
-            <h2>Kết Quả Kiểm Tra <span id="checkingStatus"></span></h2>
+            <h2>Kết Quả Kiểm Tra</h2>
             <div id="results"></div>
         </div>
     </div>
@@ -189,18 +278,25 @@
                         <li>Nhập tên cho bảng dữ liệu mới và nhấn "Xác Nhận & Lưu".</li>
                     </ol>
                 </li>
+                 <li><strong>Chọn Bảng Dữ Liệu:</strong> Dùng menu thả xuống để xem, sửa, hoặc dùng làm tiêu chuẩn đối chiếu.</li>
+                <li><strong>Xóa Bảng Dữ Liệu:</strong> Chọn một bảng từ menu, sau đó nhấn "Xóa Bảng Dữ Liệu Này".</li>
+                <li><strong>Thao tác trên bảng:</strong> Các nút "Thêm Hàng", "Lưu Thay Đổi", "Xuất Excel" đều sẽ làm việc trên bảng dữ liệu bạn đang chọn.</li>
+                <li><strong>Cột "Quy cách":</strong> Bạn có thể nhập số lượng quy cách (ví dụ: 30) trực tiếp vào cột này. Nhấn "Lưu Thay Đổi" để lưu giá trị này vào cơ sở dữ liệu.</li>
+                <li><strong>Nút "Xuất HD":</strong> Sau khi đã nhập "Quy cách", nhấn nút này để **hiện một bảng tính toán** giá bán đơn vị.</li>
             </ul>
              <h4>2. Kiểm Tra Đơn Hàng</h4>
             <ul>
-                 <li><strong>Bước 1:</strong> Chọn bảng dữ liệu chuẩn để đối chiếu</li>
-                 <li><strong>Bước 2:</strong> Tải file đơn hàng và ánh xạ cột chính xác</li>
-                 <li><strong>Bước 3:</strong> Ứng dụng sẽ <strong>TỰ ĐỘNG KIỂM TRA KỸ LƯỠNG</strong>:
-                     <ul>
-                         <li>So sánh giá theo Mã SP và Tên sản phẩm</li>
-                         <li>Kiểm tra chiết khấu nếu có trong đơn hàng</li>
-                         <li>Báo kết quả chi tiết: ĐÚNG/SAI cho từng sản phẩm</li>
-                     </ul>
-                 </li>
+                 <li><strong>Bước 1:</strong> Dùng menu thả xuống để chọn đúng Bảng Dữ Liệu Chuẩn bạn muốn dùng để đối chiếu.</li>
+                 <li><strong>Bước 2:</strong> Chọn file đơn hàng hoặc dán dữ liệu trực tiếp.</li>
+                 <li><strong>Bước 3:</strong> Ánh xạ cột và nhấn "Xác Nhận & Kiểm Tra".</li>
+                 <li><strong>Chuẩn hóa mã SP:</strong> Hệ thống tự động loại bỏ số 0 ở đầu mã sản phẩm để so sánh.</li>
+            </ul>
+            <h4>3. Sử dụng tính năng Dán Dữ liệu</h4>
+            <ul>
+                <li><strong>Bước 1:</strong> Chọn tab "Dán Dữ Liệu"</li>
+                <li><strong>Bước 2:</strong> Copy toàn bộ bảng từ Excel hoặc Google Sheets (bao gồm cả dòng tiêu đề)</li>
+                <li><strong>Bước 3:</strong> Dán vào ô văn bản và nhấn "Xử Lý & Ánh Xạ Cột"</li>
+                <li><strong>Bước 4:</strong> Ánh xạ cột tương tự như với file upload</li>
             </ul>
         </div>
     </div>
@@ -244,7 +340,6 @@
         const masterDataRef = database.ref('du_lieu_goc');
 
         let tempJsonData = null;
-        let currentMasterData = null;
 
         const datasetSelector = document.getElementById('datasetSelector');
         const currentDatasetNameSpan = document.getElementById('currentDatasetName');
@@ -258,7 +353,6 @@
         const uploadOrderInput = document.getElementById('uploadOrder');
         const resultsDiv = document.getElementById('results');
         const resultContainer = document.getElementById('resultContainer');
-        const checkingStatus = document.getElementById('checkingStatus');
         
         const mappingSection = document.getElementById('mappingSection');
         const confirmMappingBtn = document.getElementById('confirmMappingBtn');
@@ -276,6 +370,12 @@
         const closeHdModal = document.getElementById('closeHdModal');
         const hdTableBody = document.getElementById('hdTableBody');
 
+        // BIẾN MỚI CHO TÍNH NĂNG DÁN DỮ LIỆU
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const pasteDataTextarea = document.getElementById('pasteData');
+        const processPasteBtn = document.getElementById('processPasteBtn');
+
         helpBtn.onclick = () => helpModal.classList.add('modal-show');
         closeHelpModal.onclick = () => helpModal.classList.remove('modal-show');
         closeHdModal.onclick = () => hdModal.classList.remove('modal-show');
@@ -285,24 +385,37 @@
             if (event.target == hdModal) hdModal.classList.remove('modal-show');
         };
 
-        function showCheckingStatus(message) {
-            checkingStatus.innerHTML = `<span class="checking-animation">${message}</span>`;
-        }
+        // XỬ LÝ TABS
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const tabId = button.getAttribute('data-tab');
+                
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                tabContents.forEach(content => content.classList.remove('active'));
+                
+                button.classList.add('active');
+                document.getElementById(tabId).classList.add('active');
+            });
+        });
 
-        function hideCheckingStatus() {
-            checkingStatus.innerHTML = '';
+        // HÀM CHUẨN HÓA MÃ SẢN PHẨM - LOẠI BỎ SỐ 0 Ở ĐẦU
+        function normalizeProductCode(code) {
+            if (!code) return '';
+            // Chuyển thành chuỗi và loại bỏ số 0 ở đầu
+            let str = String(code).trim();
+            // Loại bỏ tất cả số 0 ở đầu, nhưng giữ lại nếu mã chỉ toàn số 0
+            str = str.replace(/^0+/, '');
+            return str === '' ? '0' : str;
         }
 
         function getCKValue(row, mappingKey) {
-            if (!mappingKey || !row[mappingKey]) return 0;
+            if (!mappingKey) return 0;
             let val = row[mappingKey];
-            if (val === undefined || val === null || val === '') return 0;
-            
-            let num = parseFloat(String(val).replace(/[%,]/g, ''));
+            if (val === undefined || val === null) return 0;
+            let num = parseFloat(val);
             if (isNaN(num)) return 0;
-            
-            if (num < 1 && num > 0) {
-                return num * 100;
+            if (typeof val === 'number' && Math.abs(num) <= 1 && num !== 0) {
+                 return num * 100;
             }
             return num;
         }
@@ -334,13 +447,11 @@
             dataTableBody.innerHTML = '';
             if (!datasetKey) {
                 dataTableBody.innerHTML = '<tr><td colspan="8">Vui lòng chọn một bảng dữ liệu để xem.</td></tr>';
-                currentMasterData = null;
                 return;
             }
             dataTableBody.innerHTML = `<tr><td colspan="8">Đang tải dữ liệu từ bảng "${datasetKey}"...</td></tr>`;
             masterDataRef.child(datasetKey).once('value', snapshot => {
                 const data = snapshot.val();
-                currentMasterData = data;
                 dataTableBody.innerHTML = '';
                 if (data && Array.isArray(data)) {
                     data.forEach(item => dataTableBody.appendChild(createTableRow(item)));
@@ -350,44 +461,30 @@
             });
         }
 
-        function setupMappingUI(file, section, selects) {
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                try {
-                    const data = new Uint8Array(event.target.result);
-                    const workbook = XLSX.read(data, { type: 'array' });
-                    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-                    const headers = XLSX.utils.sheet_to_json(worksheet, { header: 1 })[0] || [];
-                    tempJsonData = XLSX.utils.sheet_to_json(worksheet);
+        function setupMappingUI(headers, data, section, selects) {
+            tempJsonData = data;
 
-                    if (tempJsonData.length === 0) throw new Error("File không có dữ liệu.");
+            Object.values(selects).forEach(sel => sel.innerHTML = '');
 
-                    Object.values(selects).forEach(sel => sel.innerHTML = '');
+            const noneOption = '<option value="">-- Bỏ qua --</option>';
+            headers.forEach(header => {
+                const option = `<option value="${header}">${header}</option>`;
+                Object.values(selects).forEach(sel => sel.innerHTML += option);
+            });
+            
+            if (selects.mapSTT) selects.mapSTT.innerHTML = noneOption + selects.mapSTT.innerHTML;
+            if (selects.mapDVT) selects.mapDVT.innerHTML = noneOption + selects.mapDVT.innerHTML;
+            if (selects.mapCK) selects.mapCK.innerHTML = noneOption + selects.mapCK.innerHTML;
+            if (selects.mapOrderCK) selects.mapOrderCK.innerHTML = noneOption + selects.mapOrderCK.innerHTML;
 
-                    const noneOption = '<option value="">-- Bỏ qua --</option>';
-                    headers.forEach(header => {
-                        const option = `<option value="${header}">${header}</option>`;
-                        Object.values(selects).forEach(sel => sel.innerHTML += option);
-                    });
-                    
-                    if (selects.mapSTT) selects.mapSTT.innerHTML = noneOption + selects.mapSTT.innerHTML;
-                    if (selects.mapDVT) selects.mapDVT.innerHTML = noneOption + selects.mapDVT.innerHTML;
-                    if (selects.mapCK) selects.mapCK.innerHTML = noneOption + selects.mapCK.innerHTML;
-                    if (selects.mapOrderCK) selects.mapOrderCK.innerHTML = noneOption + selects.mapOrderCK.innerHTML;
-
-                    section.classList.remove('hidden');
-                } catch (err) { 
-                    alert("Lỗi khi đọc file: " + err.message); 
-                }
-            };
-            reader.readAsArrayBuffer(file);
+            section.classList.remove('hidden');
         }
 
         uploadMasterInput.addEventListener('change', (event) => {
             const file = event.target.files[0];
             if (!file) return;
             document.getElementById('datasetNameInput').value = file.name.replace(/\.[^/.]+$/, "");
-            setupMappingUI(file, mappingSection, {
+            processExcelFile(file, mappingSection, {
                 mapMaSP: document.getElementById('mapMaSP'),
                 mapTenSP: document.getElementById('mapTenSP'),
                 mapGia: document.getElementById('mapGia'),
@@ -397,6 +494,24 @@
             });
             event.target.value = '';
         });
+
+        function processExcelFile(file, section, selects) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const data = new Uint8Array(event.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const headers = XLSX.utils.sheet_to_json(worksheet, { header: 1 })[0] || [];
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+                    if (jsonData.length === 0) throw new Error("File không có dữ liệu.");
+
+                    setupMappingUI(headers, jsonData, section, selects);
+                } catch (err) { alert("Lỗi khi đọc file: " + err.message); }
+            };
+            reader.readAsArrayBuffer(file);
+        }
 
         cancelMappingBtn.addEventListener('click', () => {
             mappingSection.classList.add('hidden');
@@ -420,10 +535,10 @@
 
                 const dataToSave = tempJsonData.map((row, index) => ({
                     stt: (mapping.stt ? row[mapping.stt] : (index + 1)) || (index + 1),
-                    ma_sp: String(row[mapping.ma_sp] || '').trim(),
-                    ten_sp: String(row[mapping.ten_sp] || '').trim(),
-                    dvt: (mapping.dvt ? String(row[mapping.dvt] || '') : ''),
-                    gia_xuat: parseFloat(row[mapping.gia_xuat]) || 0,
+                    ma_sp: row[mapping.ma_sp] || '',
+                    ten_sp: row[mapping.ten_sp] || '',
+                    dvt: (mapping.dvt ? row[mapping.dvt] : '') || '',
+                    gia_xuat: row[mapping.gia_xuat] || 0,
                     chiet_khau: getCKValue(row, mapping.chiet_khau),
                     quy_cach: 1 
                 }));
@@ -436,9 +551,7 @@
                     cancelMappingBtn.click();
                 }).catch(err => { throw new Error("Lỗi khi lưu vào Firebase: " + err.message); });
 
-            } catch(error) { 
-                alert("Đã có lỗi xảy ra: " + error.message); 
-            }
+            } catch(error) { alert("Đã có lỗi xảy ra: " + error.message); }
         });
 
         uploadOrderInput.addEventListener('change', (event) => {
@@ -449,7 +562,7 @@
                 event.target.value = '';
                 return;
             }
-            setupMappingUI(file, mappingOrderSection, {
+            processExcelFile(file, mappingOrderSection, {
                 mapOrderMaSP: document.getElementById('mapOrderMaSP'),
                 mapOrderTenSP: document.getElementById('mapOrderTenSP'),
                 mapOrderGia: document.getElementById('mapOrderGia'),
@@ -457,6 +570,76 @@
             });
             event.target.value = '';
         });
+
+        // XỬ LÝ DÁN DỮ LIỆU
+        processPasteBtn.addEventListener('click', () => {
+            try {
+                const pastedText = pasteDataTextarea.value.trim();
+                if (!pastedText) {
+                    alert("Vui lòng dán dữ liệu vào ô trước khi kiểm tra.");
+                    return;
+                }
+
+                if (!getSelectedDatasetKey()) {
+                    alert("Vui lòng chọn Bảng Dữ Liệu Chuẩn để đối chiếu trước!");
+                    return;
+                }
+
+                const parsedData = parsePastedData(pastedText);
+                setupMappingUI(parsedData.headers, parsedData.data, mappingOrderSection, {
+                    mapOrderMaSP: document.getElementById('mapOrderMaSP'),
+                    mapOrderTenSP: document.getElementById('mapOrderTenSP'),
+                    mapOrderGia: document.getElementById('mapOrderGia'),
+                    mapOrderCK: document.getElementById('mapOrderCK')
+                });
+
+            } catch (error) {
+                alert("Lỗi: " + error.message);
+            }
+        });
+
+        function parsePastedData(pastedText) {
+            try {
+                const lines = pastedText.trim().split('\n');
+                if (lines.length < 2) {
+                    throw new Error("Dữ liệu phải có ít nhất 2 dòng (tiêu đề và dữ liệu)");
+                }
+
+                // Xác định dấu phân cách (tab hoặc dấu phẩy)
+                const firstLine = lines[0];
+                const hasTabs = firstLine.includes('\t');
+                const separator = hasTabs ? '\t' : ',';
+                
+                // Lấy headers từ dòng đầu tiên
+                const headers = firstLine.split(separator).map(header => header.trim());
+                
+                // Xử lý dữ liệu từ các dòng tiếp theo
+                const jsonData = [];
+                for (let i = 1; i < lines.length; i++) {
+                    if (lines[i].trim() === '') continue; // Bỏ qua dòng trống
+                    
+                    const cells = lines[i].split(separator);
+                    const row = {};
+                    
+                    headers.forEach((header, index) => {
+                        row[header] = cells[index] ? cells[index].trim() : '';
+                    });
+                    
+                    jsonData.push(row);
+                }
+
+                if (jsonData.length === 0) {
+                    throw new Error("Không có dữ liệu hợp lệ sau dòng tiêu đề");
+                }
+
+                return {
+                    headers: headers,
+                    data: jsonData
+                };
+            } catch (error) {
+                throw new Error("Lỗi khi xử lý dữ liệu dán: " + error.message);
+            }
+        }
 
         cancelOrderMappingBtn.addEventListener('click', () => {
             mappingOrderSection.classList.add('hidden');
@@ -475,139 +658,91 @@
                 if (!mapping.ma_sp || !mapping.ten_sp || !mapping.gia_xuat) throw new Error("Vui lòng ánh xạ đầy đủ các cột bắt buộc (*).");
                 if (!tempJsonData) throw new Error("Không có dữ liệu file tạm thời. Vui lòng thử lại.");
 
+                // HÀM XỬ LÝ ĐỊNH DẠNG SỐ
+                function parseNumber(value) {
+                    if (value === undefined || value === null) return 0;
+                    let str = String(value).replace(/\./g, '').replace(/,/g, '.');
+                    let num = parseFloat(str);
+                    return isNaN(num) ? 0 : num;
+                }
+
                 const datasetKey = getSelectedDatasetKey();
-                
-                showCheckingStatus("🔄 Đang kiểm tra...");
-                resultContainer.classList.remove('hidden');
+                masterDataRef.child(datasetKey).once('value', snapshot => {
+                    const masterData = snapshot.val();
+                    if (!masterData) { alert(`Bảng dữ liệu "${datasetKey}" không có dữ liệu.`); return; }
 
-                if (!currentMasterData) {
-                    masterDataRef.child(datasetKey).once('value', snapshot => {
-                        currentMasterData = snapshot.val();
-                        performOrderCheck(mapping, datasetKey);
+                    // TẠO MAP VỚI MÃ ĐÃ CHUẨN HÓA
+                    const masterDataMap = new Map();
+                    masterData.forEach(item => { 
+                        if (item.ma_sp) {
+                            const normalizedCode = normalizeProductCode(item.ma_sp);
+                            masterDataMap.set(normalizedCode, item);
+                        }
                     });
-                } else {
-                    performOrderCheck(mapping, datasetKey);
-                }
 
-            } catch (error) { 
-                alert("Đã có lỗi xảy ra: " + error.message); 
-                hideCheckingStatus();
-            }
+                    const correctItems = [], incorrectItems = [];
+                    tempJsonData.forEach(orderItem => {
+                        const orderMaSP = String(orderItem[mapping.ma_sp] || '').trim();
+                        if (!orderMaSP) return;
+                        
+                        const orderGiaXuat = parseNumber(orderItem[mapping.gia_xuat]);
+                        const orderChietKhau = getCKValue(orderItem, mapping.chiet_khau); 
+                        
+                        // CHUẨN HÓA MÃ TỪ ĐƠN HÀNG
+                        const normalizedOrderCode = normalizeProductCode(orderMaSP);
+                        
+                        if (masterDataMap.has(normalizedOrderCode)) {
+                            const masterItem = masterDataMap.get(normalizedOrderCode);
+                            const masterGia = parseNumber(masterItem.gia_xuat);
+                            const masterCK = parseNumber(masterItem.chiet_khau); 
+                            const masterTenSP = masterItem.ten_sp; 
+
+                            const giaKhop = Math.abs(orderGiaXuat - masterGia) < 0.001;
+                            const ckKhop = !mapping.chiet_khau || (Math.abs(orderChietKhau - masterCK) < 0.001);
+
+                            if (giaKhop && ckKhop) {
+                                let msg = `<li><b>${orderMaSP} - ${masterTenSP}</b>: Đúng giá (${orderGiaXuat.toLocaleString('vi-VN')} VNĐ)`;
+                                if (mapping.chiet_khau) msg += ` & CK (${orderChietKhau.toLocaleString('vi-VN')}%)`;
+                                msg += `</li>`;
+                                correctItems.push(msg);
+                            } else {
+                                let errorMsg = `<li><b>${orderMaSP} - ${masterTenSP}</b>: `;
+                                if (!giaKhop) {
+                                    const chenhLech = orderGiaXuat - masterGia;
+                                    errorMsg += `<span style="font-weight:bold; color:var(--error-color);">SAI GIÁ</span>. ĐH: ${orderGiaXuat.toLocaleString('vi-VN')} đ, Gốc: ${masterGia.toLocaleString('vi-VN')} đ. (Lệch: ${chenhLech.toLocaleString('vi-VN')} đ)`;
+                                }
+                                if (!ckKhop) {
+                                    if (!giaKhop) errorMsg += " / ";
+                                    errorMsg += `<span style="font-weight:bold; color:var(--error-color);">SAI CK</span>. ĐH: ${orderChietKhau.toLocaleString('vi-VN')}%, Gốc: ${masterCK.toLocaleString('vi-VN')}%`;
+                                }
+                                errorMsg += `</li>`;
+                                incorrectItems.push(errorMsg);
+                            }
+                        } else {
+                            // THỬ TÌM KIẾM BẰNG CÁCH KHÁC NẾU KHÔNG TÌM THẤY
+                            let found = false;
+                            for (let [masterCode, masterItem] of masterDataMap) {
+                                if (masterCode.includes(normalizedOrderCode) || normalizedOrderCode.includes(masterCode)) {
+                                    const masterGia = parseNumber(masterItem.gia_xuat);
+                                    const masterCK = parseNumber(masterItem.chiet_khau);
+                                    const masterTenSP = masterItem.ten_sp;
+
+                                    incorrectItems.push(`<li><b>${orderMaSP} - ${orderItem[mapping.ten_sp] || ''}</b>: <span style="color: orange;">CÓ THỂ TRÙNG (${masterCode} - ${masterTenSP}) - Vui lòng kiểm tra thủ công</span></li>`);
+                                    found = true;
+                                    break;
+                                }
+                            }
+                            
+                            if (!found) {
+                                incorrectItems.push(`<li><b>${orderMaSP} - ${orderItem[mapping.ten_sp] || ''}</b>: Không tìm thấy MÃ SP.</li>`);
+                            }
+                        }
+                    });
+                    displayResults(correctItems, incorrectItems);
+                    cancelOrderMappingBtn.click();
+                });
+            } catch (error) { alert("Đã có lỗi xảy ra: " + error.message); }
         });
-
-        function performOrderCheck(mapping, datasetKey) {
-            if (!currentMasterData) {
-                alert(`Bảng dữ liệu "${datasetKey}" không có dữ liệu.`);
-                hideCheckingStatus();
-                return;
-            }
-
-            // Tạo map từ dữ liệu master để dễ dàng tra cứu
-            const masterDataMap = new Map();
-            currentMasterData.forEach(item => { 
-                if (item.ma_sp) {
-                    const maSP = String(item.ma_sp).trim().toLowerCase();
-                    const tenSP = String(item.ten_sp || '').trim().toLowerCase();
-                    const key = `${maSP}_${tenSP}`;
-                    masterDataMap.set(key, item);
-                }
-            });
-
-            const correctItems = [], incorrectItems = [];
-            let totalChecked = 0;
-            
-            tempJsonData.forEach((orderItem, index) => {
-                const orderMaSP = String(orderItem[mapping.ma_sp] || '').trim();
-                const orderTenSP = String(orderItem[mapping.ten_sp] || '').trim();
-                
-                if (!orderMaSP) {
-                    return;
-                }
-                
-                totalChecked++;
-                
-                const orderGiaXuat = parseFloat(orderItem[mapping.gia_xuat]) || 0;
-                const orderChietKhau = getCKValue(orderItem, mapping.chiet_khau);
-
-                // Tìm sản phẩm trong master theo mã và tên
-                const searchKey = `${orderMaSP.toLowerCase()}_${orderTenSP.toLowerCase()}`;
-                let masterItem = masterDataMap.get(searchKey);
-                
-                // Nếu không tìm thấy theo cả mã và tên, thử tìm chỉ theo mã
-                if (!masterItem) {
-                    for (let [key, item] of masterDataMap) {
-                        if (key.startsWith(orderMaSP.toLowerCase() + '_')) {
-                            masterItem = item;
-                            break;
-                        }
-                    }
-                }
-
-                if (masterItem) {
-                    const masterGia = parseFloat(masterItem.gia_xuat || 0);
-                    const masterCK = parseFloat(masterItem.chiet_khau || 0);
-                    const masterTenSP = masterItem.ten_sp;
-
-                    // Kiểm tra giá
-                    const giaKhop = Math.abs(orderGiaXuat - masterGia) < 100;
-                    
-                    // Kiểm tra chiết khấu (nếu có trong đơn hàng)
-                    let ckKhop = true;
-                    let hasCKInOrder = mapping.chiet_khau && orderChietKhau > 0;
-                    if (hasCKInOrder) {
-                        ckKhop = Math.abs(orderChietKhau - masterCK) < 0.1;
-                    }
-
-                    if (giaKhop && ckKhop) {
-                        let msg = `<li><b>${orderMaSP} - ${masterTenSP}</b>: `;
-                        msg += `✅ <strong>GIÁ ĐÚNG</strong> (${orderGiaXuat.toLocaleString('vi-VN')} VNĐ)`;
-                        if (hasCKInOrder) {
-                            msg += ` & ✅ <strong>CHIẾT KHẤU ĐÚNG</strong> (${orderChietKhau.toLocaleString('vi-VN')}%)`;
-                        }
-                        msg += `</li>`;
-                        correctItems.push(msg);
-                    } else {
-                        let errorMsg = `<li><b>${orderMaSP} - ${masterTenSP}</b>: `;
-                        let errors = [];
-                        
-                        if (!giaKhop) {
-                            errors.push(`❌ <strong style="color:var(--error-color);">SAI GIÁ</strong> (ĐH: ${orderGiaXuat.toLocaleString('vi-VN')} đ vs Gốc: ${masterGia.toLocaleString('vi-VN')} đ)`);
-                        }
-                        
-                        if (hasCKInOrder && !ckKhop) {
-                            errors.push(`❌ <strong style="color:var(--error-color);">SAI CHIẾT KHẤU</strong> (ĐH: ${orderChietKhau.toLocaleString('vi-VN')}% vs Gốc: ${masterCK.toLocaleString('vi-VN')}%)`);
-                        }
-                        
-                        errorMsg += errors.join(' | ') + `</li>`;
-                        incorrectItems.push(errorMsg);
-                    }
-                } else {
-                    incorrectItems.push(`<li><b>${orderMaSP} - ${orderTenSP}</b>: ❌ <strong style="color:var(--error-color);">KHÔNG TÌM THẤY</strong> trong bảng dữ liệu.</li>`);
-                }
-            });
-
-            displayResults(correctItems, incorrectItems, totalChecked);
-            cancelOrderMappingBtn.click();
-            hideCheckingStatus();
-        }
-        
-        function displayResults(correct, incorrect, totalChecked) {
-            const correctCount = correct.length;
-            const incorrectCount = incorrect.length;
-            
-            let resultsHTML = `
-                <div class="result-section correct">
-                    <h3 style="color: var(--success-color);">✅ ĐÚNG (${correctCount}/${totalChecked})</h3>
-                    <ul>${correct.length>0 ? correct.join('') : '<li>Không có sản phẩm nào đúng.</li>'}</ul>
-                </div>
-                <div class="result-section incorrect">
-                    <h3 style="color: var(--error-color);">❌ SAI / KHÔNG TÌM THẤY (${incorrectCount}/${totalChecked})</h3>
-                    <ul>${incorrect.length>0 ? incorrect.join('') : '<li>Không có sản phẩm nào sai.</li>'}</ul>
-                </div>
-            `;
-            
-            resultsDiv.innerHTML = resultsHTML;
-        }
         
         clearDataBtn.addEventListener('click', () => {
             const datasetKey = getSelectedDatasetKey();
@@ -629,18 +764,13 @@
             const dataToSave = Array.from(rows).map(row => {
                 const cells = row.querySelectorAll('td');
                 return {
-                    stt: cells[0].innerText, 
-                    ma_sp: cells[1].innerText, 
-                    ten_sp: cells[2].innerText,
-                    dvt: cells[3].innerText, 
-                    gia_xuat: parseFloat(cells[4].innerText.replace(/[.,]/g, '')) || 0,
+                    stt: cells[0].innerText, ma_sp: cells[1].innerText, ten_sp: cells[2].innerText,
+                    dvt: cells[3].innerText, gia_xuat: parseFloat(cells[4].innerText.replace(/[.,]/g, '')) || 0,
                     chiet_khau: parseFloat(cells[5].innerText.replace(/[.,%]/g, '')) || 0,
                     quy_cach: parseInt(cells[6].innerText.replace(/[.,]/g, '')) || 1 
                 };
             });
-            masterDataRef.child(datasetKey).set(dataToSave).then(() => {
-                alert(`Lưu thay đổi cho bảng "${datasetKey}" thành công!`);
-            });
+            masterDataRef.child(datasetKey).set(dataToSave).then(() => alert(`Lưu thay đổi cho bảng "${datasetKey}" thành công!`));
         });
         
         exportHDBtn.addEventListener('click', () => {
@@ -726,9 +856,12 @@
             return row;
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            populateDatasetSelector();
-        });
+        function displayResults(correct, incorrect) {
+            resultContainer.classList.remove('hidden');
+            resultsDiv.innerHTML = `<div class="result-section correct"><h3 style="color: var(--success-color);">✅ ĐÚNG (${correct.length})</h3><ul>${correct.length>0?correct.join(''):'<li>Không có.</li>'}</ul></div><div class="result-section incorrect"><h3 style="color: var(--error-color);">❌ SAI / KHÔNG TÌM THẤY (${incorrect.length})</h3><ul>${incorrect.length>0?incorrect.join(''):'<li>Không có.</li>'}</ul></div>`;
+        }
+
+        document.addEventListener('DOMContentLoaded', populateDatasetSelector);
     </script>
 </body>
 </html>
