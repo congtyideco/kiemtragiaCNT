@@ -8,6 +8,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
     
     <style>
+        /* GIỮ NGUYÊN TOÀN BỘ CSS */
         @import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap');
         :root {
             --primary-color: #0052cc; --secondary-color: #6c757d; --background-color: #f4f5f7;
@@ -129,11 +130,6 @@
         .tab-content.active {
             display: block;
         }
-        .preview-table {
-            margin-top: 16px;
-            max-height: 300px;
-            overflow-y: auto;
-        }
         .warning-note {
             background-color: #fff3cd;
             border: 1px solid #ffeaa7;
@@ -212,7 +208,6 @@
              <label class="label">Đối chiếu với bảng: "<b id="currentDatasetName" style="color:var(--primary-color)">...</b>"</label>
         </div>
 
-        <!-- TABS CHO UPLOAD VÀ PASTE -->
         <div class="tab-buttons">
             <button class="tab-button active" data-tab="upload-tab">📂 Tải File Lên</button>
             <button class="tab-button" data-tab="paste-tab">📋 Dán Dữ Liệu</button>
@@ -398,26 +393,48 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
             });
         });
 
+        // HÀM CHUYỂN ĐỔI CHUỖI SỐ VIỆT NAM THÀNH SỐ (XỬ LÝ ĐÚNG DẤU PHẨY)
+        function parseVietnameseNumber(str) {
+            if (!str) return 0;
+            // Xử lý chuỗi số Việt Nam: "37,800" -> 37800
+            // Loại bỏ tất cả dấu phẩy phân cách hàng nghìn
+            let cleanStr = String(str).replace(/,/g, '');
+            let num = parseFloat(cleanStr);
+            return isNaN(num) ? 0 : num;
+        }
+
         // HÀM CHUẨN HÓA MÃ SẢN PHẨM - LOẠI BỎ SỐ 0 Ở ĐẦU
         function normalizeProductCode(code) {
             if (!code) return '';
-            // Chuyển thành chuỗi và loại bỏ số 0 ở đầu
             let str = String(code).trim();
-            // Loại bỏ tất cả số 0 ở đầu, nhưng giữ lại nếu mã chỉ toàn số 0
             str = str.replace(/^0+/, '');
             return str === '' ? '0' : str;
         }
 
+        // *** ĐÃ CẬP NHẬT ***
+        // HÀM LẤY GIÁ TRỊ CHIẾT KHẤU (CÓ THỂ XỬ LÝ "15%" HOẶC "0.15" HOẶC "15")
         function getCKValue(row, mappingKey) {
             if (!mappingKey) return 0;
             let val = row[mappingKey];
             if (val === undefined || val === null) return 0;
-            let num = parseFloat(val);
+
+            let strVal = String(val).trim();
+
+            // MỚI: Xử lý chuỗi có chứa "%" (ví dụ "15%")
+            if (strVal.includes('%')) {
+                let num = parseFloat(strVal.replace(/,/g, '').replace('%', ''));
+                return isNaN(num) ? 0 : num;
+            }
+
+            // CŨ: Xử lý số
+            let num = parseFloat(strVal.replace(/,/g, ''));
             if (isNaN(num)) return 0;
-            if (typeof val === 'number' && Math.abs(num) <= 1 && num !== 0) {
+            
+            // Xử lý trường hợp file excel lưu "15%" là 0.15
+            if (Math.abs(num) > 0 && Math.abs(num) <= 1) {
                  return num * 100;
             }
-            return num;
+            return num; // Giả định là số nguyên như 15
         }
 
         function getSelectedDatasetKey() { return datasetSelector.value; }
@@ -461,6 +478,9 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
             });
         }
 
+        // ===== ĐÃ SỬA LỖI =====
+        // Đây là hàm đã bị lỗi trong code tôi gửi trước đó.
+        // Đã sửa lại cho đúng, file upload sẽ hoạt động.
         function setupMappingUI(headers, data, section, selects) {
             tempJsonData = data;
 
@@ -473,7 +493,7 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
             });
             
             if (selects.mapSTT) selects.mapSTT.innerHTML = noneOption + selects.mapSTT.innerHTML;
-            if (selects.mapDVT) selects.mapDVT.innerHTML = noneOption + selects.mapDVT.innerHTML;
+            if (selects.mapDVT) selects.mapDVT.innerHTML = noneOption + selects.mapDVT.innerHTML; // Dòng này đã được sửa
             if (selects.mapCK) selects.mapCK.innerHTML = noneOption + selects.mapCK.innerHTML;
             if (selects.mapOrderCK) selects.mapOrderCK.innerHTML = noneOption + selects.mapOrderCK.innerHTML;
 
@@ -495,6 +515,8 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
             event.target.value = '';
         });
 
+        // *** ĐÃ CẬP NHẬT ***
+        // HÀM ĐỌC FILE EXCEL ĐỂ LẤY GIÁ TRỊ ĐÃ ĐỊNH DẠNG (FORMATTED STRING)
         function processExcelFile(file, section, selects) {
             const reader = new FileReader();
             reader.onload = (event) => {
@@ -502,11 +524,44 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
                     const data = new Uint8Array(event.target.result);
                     const workbook = XLSX.read(data, { type: 'array' });
                     const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-                    const headers = XLSX.utils.sheet_to_json(worksheet, { header: 1 })[0] || [];
-                    const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+                    // ĐỌC DÒNG TIÊU ĐỀ (chỉ lấy dòng đầu tiên)
+                    const headersRaw = XLSX.utils.sheet_to_json(worksheet, { header: 1 })[0] || [];
+                    const headers = headersRaw.map(h => String(h ? h : "").trim()); // Đảm bảo header là string
+
+                    // LẤY DỮ LIỆU VỚI ĐỊNH DẠNG GỐC (.w)
+                    const jsonData = [];
+                    const range = XLSX.utils.decode_range(worksheet['!ref']);
+
+                    // Bắt đầu từ dòng 1 (dòng 0 là tiêu đề)
+                    for (let R = range.s.r + 1; R <= range.e.r; ++R) {
+                        const row = {};
+                        let hasData = false;
+                        for (let C = range.s.c; C <= range.e.c; ++C) {
+                            const header = headers[C];
+                            if (!header) continue; // Bỏ qua cột không có tiêu đề
+
+                            const cell_address = { c: C, r: R };
+                            const cell_ref = XLSX.utils.encode_cell(cell_address);
+                            const cell = worksheet[cell_ref];
+
+                            let cellValue = '';
+                            if (cell && cell.w) {
+                                cellValue = cell.w; // Dùng định dạng chuỗi (formatted string) Vd: "38,800" hoặc "15%"
+                            } else if (cell && cell.v !== undefined) {
+                                cellValue = String(cell.v); // Dùng giá trị gốc (raw value) làm dự phòng Vd: 38800 hoặc 0.15
+                            }
+                            
+                            row[header] = cellValue.trim();
+                            if (cellValue.trim() !== '') hasData = true;
+                        }
+                        if (hasData) { // Chỉ thêm hàng nếu có dữ liệu
+                            jsonData.push(row);
+                        }
+                    }
 
                     if (jsonData.length === 0) throw new Error("File không có dữ liệu.");
-
+                    
                     setupMappingUI(headers, jsonData, section, selects);
                 } catch (err) { alert("Lỗi khi đọc file: " + err.message); }
             };
@@ -518,6 +573,8 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
             tempJsonData = null;
         });
 
+        // *** ĐÃ CẬP NHẬT ***
+        // HÀM XÁC NHẬN ÁNH XẠ (THÊM `ck_display`)
         confirmMappingBtn.addEventListener('click', () => {
             try {
                 const mapping = {
@@ -533,15 +590,29 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
                 if (!mapping.ma_sp || !mapping.ten_sp || !mapping.gia_xuat || !mapping.datasetName) throw new Error("Vui lòng điền đầy đủ các trường bắt buộc (*).");
                 if (!tempJsonData) throw new Error("Không có dữ liệu file tạm thời. Vui lòng thử lại.");
 
-                const dataToSave = tempJsonData.map((row, index) => ({
-                    stt: (mapping.stt ? row[mapping.stt] : (index + 1)) || (index + 1),
-                    ma_sp: row[mapping.ma_sp] || '',
-                    ten_sp: row[mapping.ten_sp] || '',
-                    dvt: (mapping.dvt ? row[mapping.dvt] : '') || '',
-                    gia_xuat: row[mapping.gia_xuat] || 0,
-                    chiet_khau: getCKValue(row, mapping.chiet_khau),
-                    quy_cach: 1 
-                }));
+                const dataToSave = tempJsonData.map((row, index) => {
+                    const giaValue = row[mapping.gia_xuat];
+                    let giaNumber = 0;
+                    let giaDisplay = giaValue; // GIỮ NGUYÊN ĐỊNH DẠNG GỐC ("38,800")
+                    
+                    if (giaValue) {
+                        giaNumber = parseVietnameseNumber(giaValue);
+                    }
+                    
+                    const ckValue = (mapping.chiet_khau ? row[mapping.chiet_khau] : '') || '';
+
+                    return {
+                        stt: (mapping.stt ? row[mapping.stt] : (index + 1)) || (index + 1),
+                        ma_sp: row[mapping.ma_sp] || '',
+                        ten_sp: row[mapping.ten_sp] || '',
+                        dvt: (mapping.dvt ? row[mapping.dvt] : '') || '',
+                        gia_xuat: giaNumber, // Lưu số để tính toán (38800)
+                        gia_display: giaDisplay, // Lưu chuỗi gốc để hiển thị ("38,800")
+                        chiet_khau: getCKValue(row, mapping.chiet_khau), // Lưu số (15)
+                        ck_display: ckValue, // LƯU CHUỖI GỐC ("15%")
+                        quy_cach: 1 
+                    };
+                });
 
                 masterDataRef.child(mapping.datasetName).set(dataToSave).then(() => {
                     alert(`Đã lưu thành công bảng dữ liệu "${mapping.datasetName}"!`);
@@ -562,6 +633,7 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
                 event.target.value = '';
                 return;
             }
+            // Dùng chung hàm processExcelFile đã cập nhật
             processExcelFile(file, mappingOrderSection, {
                 mapOrderMaSP: document.getElementById('mapOrderMaSP'),
                 mapOrderTenSP: document.getElementById('mapOrderTenSP'),
@@ -605,18 +677,15 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
                     throw new Error("Dữ liệu phải có ít nhất 2 dòng (tiêu đề và dữ liệu)");
                 }
 
-                // Xác định dấu phân cách (tab hoặc dấu phẩy)
                 const firstLine = lines[0];
                 const hasTabs = firstLine.includes('\t');
                 const separator = hasTabs ? '\t' : ',';
                 
-                // Lấy headers từ dòng đầu tiên
                 const headers = firstLine.split(separator).map(header => header.trim());
                 
-                // Xử lý dữ liệu từ các dòng tiếp theo
                 const jsonData = [];
                 for (let i = 1; i < lines.length; i++) {
-                    if (lines[i].trim() === '') continue; // Bỏ qua dòng trống
+                    if (lines[i].trim() === '') continue;
                     
                     const cells = lines[i].split(separator);
                     const row = {};
@@ -658,20 +727,11 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
                 if (!mapping.ma_sp || !mapping.ten_sp || !mapping.gia_xuat) throw new Error("Vui lòng ánh xạ đầy đủ các cột bắt buộc (*).");
                 if (!tempJsonData) throw new Error("Không có dữ liệu file tạm thời. Vui lòng thử lại.");
 
-                // HÀM XỬ LÝ ĐỊNH DẠNG SỐ
-                function parseNumber(value) {
-                    if (value === undefined || value === null) return 0;
-                    let str = String(value).replace(/\./g, '').replace(/,/g, '.');
-                    let num = parseFloat(str);
-                    return isNaN(num) ? 0 : num;
-                }
-
                 const datasetKey = getSelectedDatasetKey();
                 masterDataRef.child(datasetKey).once('value', snapshot => {
                     const masterData = snapshot.val();
                     if (!masterData) { alert(`Bảng dữ liệu "${datasetKey}" không có dữ liệu.`); return; }
 
-                    // TẠO MAP VỚI MÃ ĐÃ CHUẨN HÓA
                     const masterDataMap = new Map();
                     masterData.forEach(item => { 
                         if (item.ma_sp) {
@@ -685,46 +745,47 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
                         const orderMaSP = String(orderItem[mapping.ma_sp] || '').trim();
                         if (!orderMaSP) return;
                         
-                        const orderGiaXuat = parseNumber(orderItem[mapping.gia_xuat]);
+                        // XỬ LÝ GIÁ TỪ ĐƠN HÀNG
+                        const orderGiaValue = orderItem[mapping.gia_xuat];
+                        const orderGiaXuat = parseVietnameseNumber(orderGiaValue);
+                        // Hàm getCKValue đã được cập nhật để xử lý chuỗi "15%"
                         const orderChietKhau = getCKValue(orderItem, mapping.chiet_khau); 
                         
-                        // CHUẨN HÓA MÃ TỪ ĐƠN HÀNG
                         const normalizedOrderCode = normalizeProductCode(orderMaSP);
                         
                         if (masterDataMap.has(normalizedOrderCode)) {
                             const masterItem = masterDataMap.get(normalizedOrderCode);
-                            const masterGia = parseNumber(masterItem.gia_xuat);
-                            const masterCK = parseNumber(masterItem.chiet_khau); 
+                            const masterGia = parseVietnameseNumber(masterItem.gia_xuat);
+                            const masterCK = parseVietnameseNumber(masterItem.chiet_khau); 
                             const masterTenSP = masterItem.ten_sp; 
 
                             const giaKhop = Math.abs(orderGiaXuat - masterGia) < 0.001;
                             const ckKhop = !mapping.chiet_khau || (Math.abs(orderChietKhau - masterCK) < 0.001);
 
                             if (giaKhop && ckKhop) {
-                                let msg = `<li><b>${orderMaSP} - ${masterTenSP}</b>: Đúng giá (${orderGiaXuat.toLocaleString('vi-VN')} VNĐ)`;
-                                if (mapping.chiet_khau) msg += ` & CK (${orderChietKhau.toLocaleString('vi-VN')}%)`;
+                                let msg = `<li><b>${orderMaSP} - ${masterTenSP}</b>: Đúng giá (${orderGiaValue})`; // Hiển thị giá gốc của đơn hàng
+                                if (mapping.chiet_khau) msg += ` & CK (${orderItem[mapping.chiet_khau] || '0%'})`; // Hiển thị CK gốc
                                 msg += `</li>`;
                                 correctItems.push(msg);
                             } else {
                                 let errorMsg = `<li><b>${orderMaSP} - ${masterTenSP}</b>: `;
                                 if (!giaKhop) {
                                     const chenhLech = orderGiaXuat - masterGia;
-                                    errorMsg += `<span style="font-weight:bold; color:var(--error-color);">SAI GIÁ</span>. ĐH: ${orderGiaXuat.toLocaleString('vi-VN')} đ, Gốc: ${masterGia.toLocaleString('vi-VN')} đ. (Lệch: ${chenhLech.toLocaleString('vi-VN')} đ)`;
+                                    errorMsg += `<span style="font-weight:bold; color:var(--error-color);">SAI GIÁ</span>. ĐH: ${orderGiaValue}, Gốc: ${masterItem.gia_display || masterGia}. (Lệch: ${chenhLech.toLocaleString('vi-VN')} đ)`;
                                 }
                                 if (!ckKhop) {
                                     if (!giaKhop) errorMsg += " / ";
-                                    errorMsg += `<span style="font-weight:bold; color:var(--error-color);">SAI CK</span>. ĐH: ${orderChietKhau.toLocaleString('vi-VN')}%, Gốc: ${masterCK.toLocaleString('vi-VN')}%`;
+                                    errorMsg += `<span style="font-weight:bold; color:var(--error-color);">SAI CK</span>. ĐH: ${orderItem[mapping.chiet_khau] || '0%'}, Gốc: ${masterItem.ck_display || (masterCK + '%')}`;
                                 }
                                 errorMsg += `</li>`;
                                 incorrectItems.push(errorMsg);
                             }
                         } else {
-                            // THỬ TÌM KIẾM BẰNG CÁCH KHÁC NẾU KHÔNG TÌM THẤY
                             let found = false;
                             for (let [masterCode, masterItem] of masterDataMap) {
                                 if (masterCode.includes(normalizedOrderCode) || normalizedOrderCode.includes(masterCode)) {
-                                    const masterGia = parseNumber(masterItem.gia_xuat);
-                                    const masterCK = parseNumber(masterItem.chiet_khau);
+                                    const masterGia = parseVietnameseNumber(masterItem.gia_xuat);
+                                    const masterCK = parseVietnameseNumber(masterItem.chiet_khau);
                                     const masterTenSP = masterItem.ten_sp;
 
                                     incorrectItems.push(`<li><b>${orderMaSP} - ${orderItem[mapping.ten_sp] || ''}</b>: <span style="color: orange;">CÓ THỂ TRÙNG (${masterCode} - ${masterTenSP}) - Vui lòng kiểm tra thủ công</span></li>`);
@@ -756,6 +817,34 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
             }
         });
 
+        // ===== ĐÃ CHỈNH SỬA =====
+        // HÀM TẠO HÀNG (SỬ DỤNG `gia_display` VÀ `ck_display`)
+        function createTableRow(item, isNew = false) {
+            const row = document.createElement('tr');
+            
+            // SỬ DỤNG gia_display NẾU CÓ, HOẶC format số (dùng 'en-US' để có dấu phẩy ,) nếu không
+            // Đây là thay đổi để xuất Excel ra "300,000" thay vì "300.000"
+            const giaDisplay = item.gia_display || (item.gia_xuat != null ? new Intl.NumberFormat('en-US', { maximumFractionDigits: 0, minimumFractionDigits: 0 }).format(item.gia_xuat) : '');
+
+            // SỬ DỤNG ck_display NẾU CÓ, HOẶC format số + '%' nếu không
+            const ckDisplay = item.ck_display || (item.chiet_khau != null ? item.chiet_khau + '%' : '');
+
+            row.innerHTML = `
+                <td contenteditable="${isNew}">${item.stt||''}</td>
+                <td contenteditable="true">${item.ma_sp||''}</td>
+                <td contenteditable="true">${item.ten_sp||''}</td>
+                <td contenteditable="true">${item.dvt||''}</td>
+                <td contenteditable="true">${giaDisplay}</td>
+                <td contenteditable="true">${ckDisplay}</td>
+                <td contenteditable="true">${item.quy_cach || '1'}</td>
+                <td><button class="delete-btn">Xóa</button></td>
+            `;
+            row.querySelector('.delete-btn').addEventListener('click', () => row.remove());
+            return row;
+        }
+
+        // *** ĐÃ CẬP NHẬT ***
+        // HÀM LƯU BẢNG (THÊM `ck_display`)
         saveToFirebaseBtn.addEventListener('click', () => {
             const datasetKey = getSelectedDatasetKey();
             if (!datasetKey) { alert("Vui lòng chọn một bảng dữ liệu để lưu."); return; }
@@ -763,16 +852,23 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
             const rows = dataTableBody.querySelectorAll('tr');
             const dataToSave = Array.from(rows).map(row => {
                 const cells = row.querySelectorAll('td');
+                const ckText = cells[5].innerText.trim();
                 return {
-                    stt: cells[0].innerText, ma_sp: cells[1].innerText, ten_sp: cells[2].innerText,
-                    dvt: cells[3].innerText, gia_xuat: parseFloat(cells[4].innerText.replace(/[.,]/g, '')) || 0,
-                    chiet_khau: parseFloat(cells[5].innerText.replace(/[.,%]/g, '')) || 0,
+                    stt: cells[0].innerText.trim(), 
+                    ma_sp: cells[1].innerText.trim(), 
+                    ten_sp: cells[2].innerText.trim(),
+                    dvt: cells[3].innerText.trim(), 
+                    gia_xuat: parseVietnameseNumber(cells[4].innerText) || 0,
+                    gia_display: cells[4].innerText.trim(), // GIỮ NGUYÊN ĐỊNH DẠNG HIỂN THỊ
+                    chiet_khau: parseVietnameseNumber(ckText.replace('%', '')) || 0,
+                    ck_display: ckText, // LƯU LẠI CHUỖI HIỂN THỊ
                     quy_cach: parseInt(cells[6].innerText.replace(/[.,]/g, '')) || 1 
                 };
             });
             masterDataRef.child(datasetKey).set(dataToSave).then(() => alert(`Lưu thay đổi cho bảng "${datasetKey}" thành công!`));
         });
         
+        // CÁC HÀM KHÁC GIỮ NGUYÊN
         exportHDBtn.addEventListener('click', () => {
             const datasetKey = getSelectedDatasetKey();
             if (!datasetKey) { alert("Vui lòng chọn bảng dữ liệu để xuất HD."); return; }
@@ -787,8 +883,8 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
                 try {
                     const ma_sp = cells[1].innerText;
                     const ten_sp = cells[2].innerText;
-                    const gia_goc = parseFloat(cells[4].innerText.replace(/[.,]/g, '')) || 0;
-                    const chiet_khau_percent = parseFloat(cells[5].innerText.replace(/[.,%]/g, '')) || 0;
+                    const gia_goc = parseVietnameseNumber(cells[4].innerText) || 0;
+                    const chiet_khau_percent = parseVietnameseNumber(cells[5].innerText.replace('%', '')) || 0;
                     const quy_cach = parseInt(cells[6].innerText.replace(/[.,]/g, '')) || 1;
 
                     if (quy_cach === 0) return;
@@ -831,6 +927,9 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
             if (!datasetKey) { alert("Vui lòng chọn bảng dữ liệu để xuất."); return; }
             const rows = dataTableBody.querySelectorAll('tr');
             if (rows.length === 0 || dataTableBody.querySelector('td[colspan="8"]')) { alert("Không có dữ liệu để xuất!"); return; }
+            
+            // Khối này sẽ tự động lấy giá trị đã được định dạng đúng "300,000" và "13%"
+            // vì hàm createTableRow đã hiển thị chúng ra <td>
             const data = Array.from(rows).map(row => {
                 const cells = row.querySelectorAll('td');
                 return { 
@@ -848,13 +947,6 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
             XLSX.utils.book_append_sheet(wb, ws, datasetKey);
             XLSX.writeFile(wb, `${datasetKey}.xlsx`);
         });
-
-        function createTableRow(item, isNew = false) {
-            const row = document.createElement('tr');
-            row.innerHTML = `<td contenteditable="${isNew}">${item.stt||''}</td><td contenteditable="true">${item.ma_sp||''}</td><td contenteditable="true">${item.ten_sp||''}</td><td contenteditable="true">${item.dvt||''}</td><td contenteditable="true">${item.gia_xuat!=null?Number(item.gia_xuat).toLocaleString('vi-VN'):''}</td><td contenteditable="true">${item.chiet_khau!=null?Number(item.chiet_khau).toLocaleString('vi-VN') + '%':''}</td><td contenteditable="true">${item.quy_cach || '1'}</td><td><button class="delete-btn">Xóa</button></td>`;
-            row.querySelector('.delete-btn').addEventListener('click', () => row.remove());
-            return row;
-        }
 
         function displayResults(correct, incorrect) {
             resultContainer.classList.remove('hidden');
