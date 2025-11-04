@@ -57,7 +57,8 @@
         .hidden { display: none !important; }
         #mappingSection, #mappingOrderSection { border: 2px solid var(--primary-color); border-radius: 8px; padding: 24px; margin-top: 24px; background: var(--white-color); }
         .mapping-row { display: flex; align-items: center; margin-bottom: 16px; gap: 12px;}
-        .mapping-row label { flex-basis: 150px; text-align: right; font-weight: 600; }
+        /* Tăng độ rộng label để chứa tên cột mới */
+        .mapping-row label { flex-basis: 250px; text-align: right; font-weight: 600; }
         .mapping-row select, .mapping-row input { flex-grow: 1; }
         .mapping-actions { text-align: right; margin-top: 24px; }
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.6); align-items: center; justify-content: center; }
@@ -70,8 +71,6 @@
         #helpBtn { position: absolute; top: 32px; right: 32px; background-color: #ffab00; font-size: 14px; padding: 8px 16px; z-index: 5; }
         #helpBtn:hover { background-color: #ff9900; }
         @keyframes fadeIn { from {opacity: 0; transform: scale(0.95);} to {opacity: 1; transform: scale(1);} }
-
-        /* STYLE MỚI CHO TÍNH NĂNG DÁN DỮ LIỆU */
         .paste-area {
             border: 2px dashed var(--border-color);
             border-radius: 5px;
@@ -162,13 +161,17 @@
 
         <div id="mappingSection" class="hidden">
             <h3>Bước 2: Ánh xạ cột</h3>
-             <div class="mapping-row"><label for="mapMaSP">Cột Mã SP (*):</label><select id="mapMaSP"></select></div>
-             <div class="mapping-row"><label for="mapTenSP">Cột Tên sản phẩm (*):</label><select id="mapTenSP"></select></div>
-             <div class="mapping-row"><label for="mapGia">Cột Giá (*):</label><select id="mapGia"></select></div>
+             
+             <div class="mapping-row"><label for="mapMaSP">Mã (item product) (*):</label><select id="mapMaSP"></select></div>
+             <div class="mapping-row"><label for="mapTenSP">Tên sản phẩm ( product name) (*):</label><select id="mapTenSP"></select></div>
+             <div class="mapping-row"><label for="mapGia">Gía bán ( Unit price) (*):</label><select id="mapGia"></select></div>
              <hr>
-             <div class="mapping-row"><label for="mapSTT">Cột STT (Tùy chọn):</label><select id="mapSTT"></select></div>
+             <div class="mapping-row"><label for="mapSTT">STT (Tùy chọn):</label><select id="mapSTT"></select></div>
              <div class="mapping-row"><label for="mapDVT">Cột ĐVT (Tùy chọn):</label><select id="mapDVT"></select></div>
-             <div class="mapping-row"><label for="mapCK">Cột Chiết khấu (%) (Tùy chọn):</label><select id="mapCK"></select></div>
+             <div class="mapping-row"><label for="mapQuyCach">Cột Quy Cách (Tùy chọn):</label><select id="mapQuyCach"></select></div>
+             
+             <div class="mapping-row"><label for="mapCK">Chiết khấu ( Discount percent) (Tùy chọn):</label><select id="mapCK"></select></div>
+             <div class="mapping-row"><label for="mapGiaXuatHD">Gía xuất (HD) VAT (whole sales price) (Tùy chọn):</label><select id="mapGiaXuatHD"></select></div>
              <div class="mapping-row"><label for="datasetNameInput">Đặt tên bảng dữ liệu (*):</label><input type="text" id="datasetNameInput" placeholder="VD: Bảng giá sỉ T10/2025"></div>
              <div class="mapping-actions">
                  <button id="confirmMappingBtn" class="success-btn">Xác Nhận & Lưu</button>
@@ -191,11 +194,9 @@
                         <th>Mã SP</th>
                         <th>Tên sản phẩm</th>
                         <th>ĐVT</th>
-                        <th>Giá xuất HĐ (sau VAT)</th>
-                        <th>Chiết khấu (%)</th>
-                        <th>Quy cách</th>
-                        <th>Hành động</th>
-                    </tr>
+                        <th>Gía bán (Unit price)</th> <th>Chiết khấu (%)</th>
+                        <th>Gía xuất (HD) VAT</th> <th>Quy cách</th> <th>Hành động</th>
+                        </tr>
                 </thead>
                 <tbody></tbody>
             </table>
@@ -302,21 +303,22 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
                     <ol>
                         <li>Nhấn vào ô "Tải lên file Excel mới" và chọn file của bạn.</li>
                         <li>Một khu vực <strong>"Tham chiếu cột "</strong> sẽ hiện ra ngay trên trang.</li>
-                        <li>Với mỗi dòng có dấu sao (*), hãy chọn từ menu thả xuống tên cột tương ứng có trong file của bạn.</li>
+                        <li>Ánh xạ các cột bắt buộc (*).</li>
+                        <li>Các cột như `Gía xuất (HD) VAT`, `ĐVT`, `Quy Cách` là tùy chọn. (Cần có `Quy Cách` để chạy chức năng "Xuất HD" và "Đơn Hàng Bán").</li>
                         <li>Nhập tên cho bảng dữ liệu mới và nhấn "Xác Nhận & Lưu".</li>
                     </ol>
                 </li>
                  <li><strong>Chọn Bảng Dữ Liệu:</strong> Dùng menu thả xuống để xem, sửa, hoặc dùng làm tiêu chuẩn đối chiếu.</li>
                 <li><strong>Xóa Bảng Dữ Liệu:</strong> Chọn một bảng từ menu, sau đó nhấn "Xóa Bảng Dữ Liệu Này".</li>
                 <li><strong>Thao tác trên bảng:</strong> Các nút "Thêm Hàng", "Lưu Thay Đổi", "Xuất Excel" đều sẽ làm việc trên bảng dữ liệu bạn đang chọn.</li>
-                <li><strong>Cột "Quy cách":</strong> Bạn có thể nhập số lượng quy cách (ví dụ: 30) trực tiếp vào cột này. Nhấn "Lưu Thay Đổi" để lưu giá trị này vào cơ sở dữ liệu.</li>
-                <li><strong>Nút "Xuất HD":</strong> Sau khi đã nhập "Quy cách", nhấn nút này để **hiện một bảng tính toán** giá bán đơn vị.</li>
+                <li><strong>Cột "Quy cách", "Gía xuất (HD) VAT":</strong> Bạn có thể nhập/sửa trực tiếp vào các cột này. Nhấn "Lưu Thay Đổi" để lưu giá trị này vào cơ sở dữ liệu.</li>
+                <li><strong>Nút "Xuất HD":</strong> Sau khi đã nhập "Quy cách", nhấn nút này để **hiện một bảng tính toán** giá bán đơn vị (dựa trên cột "Gía bán (Unit price)").</li>
             </ul>
              <h4>2. Kiểm Tra Đơn Hàng</h4>
             <ul>
                  <li><strong>Bước 1:</strong> Dùng menu thả xuống để chọn đúng Bảng Dữ Liệu Chuẩn bạn muốn dùng để đối chiếu.</li>
                  <li><strong>Bước 2:</strong> Chọn file đơn hàng hoặc dán dữ liệu trực tiếp.</li>
-                 <li><strong>Bước 3:</strong> Ánh xạ cột (Mã, Tên, Giá, và cột "Số lượng" mới) và nhấn "Xác Nhận & Kiểm Tra".</li>
+                 <li><strong>Bước 3:</strong> Ánh xạ cột (Mã, Tên, Giá, và cột "Số lượng" mới) và nhấn "Xác Nhận & Kiểm Tra". (Hệ thống sẽ so sánh "Giá" trong đơn hàng với "Gía bán (Unit price)" trong bảng gốc).</li>
                  <li><strong>Bước 4:</strong> Xem kết quả ở tab "Kết Quả So Giá" (Đúng/Sai) hoặc tab "Đơn Hàng Bán" (bảng tính toán chi tiết).</li>
                  <li><strong>Chuẩn hóa mã SP:</strong> Hệ thống tự động loại bỏ số 0 ở đầu mã sản phẩm để so sánh.</li>
             </ul>
@@ -370,6 +372,7 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
 
         let tempJsonData = null;
 
+        // GIỮ NGUYÊN CÁC BIẾN
         const datasetSelector = document.getElementById('datasetSelector');
         const currentDatasetNameSpan = document.getElementById('currentDatasetName');
         const uploadMasterInput = document.getElementById('uploadMaster');
@@ -407,11 +410,9 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
         const resultTabButtonsContainer = document.getElementById('result-tab-buttons');
         const salesOrderTableBody = document.getElementById('salesOrderTableBody');
         
-        // ##### BIẾN MỚI #####
         const exportSalesOrderBtn = document.getElementById('exportSalesOrderBtn'); 
-        // ##### KẾT THÚC BIẾN MỚI #####
 
-
+        // GIỮ NGUYÊN CÁC HÀM XỬ LÝ MODAL VÀ TAB
         helpBtn.onclick = () => helpModal.classList.add('modal-show');
         closeHelpModal.onclick = () => helpModal.classList.remove('modal-show');
         closeHdModal.onclick = () => hdModal.classList.remove('modal-show');
@@ -421,7 +422,6 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
             if (event.target == hdModal) hdModal.classList.remove('modal-show');
         };
 
-        // XỬ LÝ TABS (Upload/Paste)
         tabButtons.forEach(button => {
             button.addEventListener('click', () => {
                 const tabId = button.getAttribute('data-tab');
@@ -434,7 +434,6 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
             });
         });
 
-        // XỬ LÝ TABS KẾT QUẢ (So Giá / Đơn Hàng Bán)
         resultTabButtonsContainer.addEventListener('click', (e) => {
             if (e.target.classList.contains('tab-button')) {
                 const tabId = e.target.getAttribute('data-tab');
@@ -447,7 +446,7 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
             }
         });
 
-        // HÀM CHUẨN: CHUYỂN "12,000" -> 12000
+        // GIỮ NGUYÊN CÁC HÀM TIỆN ÍCH
         function parseVietnameseNumber(str) {
             if (!str) return 0;
             let cleanStr = String(str).replace(/,/g, '');
@@ -455,7 +454,6 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
             return isNaN(num) ? 0 : num;
         }
 
-        // HÀM CHUẨN: '00123' -> '123'
         function normalizeProductCode(code) {
             if (!code) return '';
             let str = String(code).trim();
@@ -463,7 +461,6 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
             return str === '' ? '0' : str;
         }
         
-        // HÀM CHUẨN: Xử lý '15%', '0.15', '15'
         function getCKValue(row, mappingKey) {
             if (!mappingKey) return 0;
             let val = row[mappingKey];
@@ -510,22 +507,29 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
         function loadDataFromFirebase() {
             const datasetKey = getSelectedDatasetKey();
             dataTableBody.innerHTML = '';
+            // ##### BẮT ĐẦU THAY ĐỔI ##### (Cập nhật colspan)
+            const colspan = 9; // 9 cột
             if (!datasetKey) {
-                dataTableBody.innerHTML = '<tr><td colspan="8">Vui lòng chọn một bảng dữ liệu để xem.</td></tr>';
+                dataTableBody.innerHTML = `<tr><td colspan="${colspan}">Vui lòng chọn một bảng dữ liệu để xem.</td></tr>`;
                 return;
             }
-            dataTableBody.innerHTML = `<tr><td colspan="8">Đang tải dữ liệu từ bảng "${datasetKey}"...</td></tr>`;
+            dataTableBody.innerHTML = `<tr><td colspan="${colspan}">Đang tải dữ liệu từ bảng "${datasetKey}"...</td></tr>`;
+            // ##### KẾT THÚC THAY ĐỔI #####
+            
             masterDataRef.child(datasetKey).once('value', snapshot => {
                 const data = snapshot.val();
                 dataTableBody.innerHTML = '';
                 if (data && Array.isArray(data)) {
                     data.forEach(item => dataTableBody.appendChild(createTableRow(item)));
                 } else {
-                    dataTableBody.innerHTML = `<tr><td colspan="8">Bảng dữ liệu "${datasetKey}" không có dữ liệu.</td></tr>`;
+                    // ##### BẮT ĐẦU THAY ĐỔI ##### (Cập nhật colspan)
+                    dataTableBody.innerHTML = `<tr><td colspan="${colspan}">Bảng dữ liệu "${datasetKey}" không có dữ liệu.</td></tr>`;
+                    // ##### KẾT THÚC THAY ĐỔI #####
                 }
             });
         }
 
+        // ##### BẮT ĐẦU THAY ĐỔI ##### (Cập nhật các select)
         function setupMappingUI(headers, data, section, selects) {
             tempJsonData = data;
 
@@ -537,30 +541,44 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
                 Object.values(selects).forEach(sel => sel.innerHTML += option);
             });
             
+            // Thêm tùy chọn "Bỏ qua" cho TẤT CẢ các cột tùy chọn
             if (selects.mapSTT) selects.mapSTT.innerHTML = noneOption + selects.mapSTT.innerHTML;
             if (selects.mapDVT) selects.mapDVT.innerHTML = noneOption + selects.mapDVT.innerHTML;
             if (selects.mapCK) selects.mapCK.innerHTML = noneOption + selects.mapCK.innerHTML;
+            if (selects.mapQuyCach) selects.mapQuyCach.innerHTML = noneOption + selects.mapQuyCach.innerHTML; // Giữ lại
+            if (selects.mapGiaXuatHD) selects.mapGiaXuatHD.innerHTML = noneOption + selects.mapGiaXuatHD.innerHTML; // MỚI
+            // Xóa Hoạt Chất, Hàm Lượng
+            
             if (selects.mapOrderCK) selects.mapOrderCK.innerHTML = noneOption + selects.mapOrderCK.innerHTML;
             if (selects.mapOrderSoLuong) selects.mapOrderSoLuong.innerHTML = noneOption + selects.mapOrderSoLuong.innerHTML;
 
             section.classList.remove('hidden');
         }
+        // ##### KẾT THÚC THAY ĐỔI #####
+
 
         uploadMasterInput.addEventListener('change', (event) => {
             const file = event.target.files[0];
             if (!file) return;
             document.getElementById('datasetNameInput').value = file.name.replace(/\.[^/.]+$/, "");
+            
+            // ##### BẮT ĐẦU THAY ĐỔI ##### (Cập nhật object selects)
             processExcelFile(file, mappingSection, {
                 mapMaSP: document.getElementById('mapMaSP'),
                 mapTenSP: document.getElementById('mapTenSP'),
-                mapGia: document.getElementById('mapGia'),
+                mapGia: document.getElementById('mapGia'), // Đây là Gía bán (Unit price)
                 mapSTT: document.getElementById('mapSTT'),
                 mapDVT: document.getElementById('mapDVT'),
-                mapCK: document.getElementById('mapCK')
+                mapCK: document.getElementById('mapCK'),
+                mapQuyCach: document.getElementById('mapQuyCach'), // Giữ lại
+                mapGiaXuatHD: document.getElementById('mapGiaXuatHD') // MỚI
             });
+            // ##### KẾT THÚC THAY ĐỔI #####
+            
             event.target.value = '';
         });
 
+        // GIỮ NGUYÊN HÀM NÀY
         function processExcelFile(file, section, selects) {
             const reader = new FileReader();
             reader.onload = (event) => {
@@ -616,41 +634,51 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
 
         confirmMappingBtn.addEventListener('click', () => {
             try {
+                // ##### BẮT ĐẦU THAY ĐỔI ##### (Cập nhật object mapping)
                 const mapping = {
                     ma_sp: document.getElementById('mapMaSP').value,
                     ten_sp: document.getElementById('mapTenSP').value,
-                    gia_xuat: document.getElementById('mapGia').value,
+                    gia_ban: document.getElementById('mapGia').value, // Đổi tên
                     stt: document.getElementById('mapSTT').value,
                     dvt: document.getElementById('mapDVT').value,
                     chiet_khau: document.getElementById('mapCK').value,
+                    quy_cach: document.getElementById('mapQuyCach').value, // Giữ lại
+                    gia_xuat_hd: document.getElementById('mapGiaXuatHD').value, // MỚI
                     datasetName: document.getElementById('datasetNameInput').value.trim()
                 };
+                // ##### KẾT THÚC THAY ĐỔI #####
 
-                if (!mapping.ma_sp || !mapping.ten_sp || !mapping.gia_xuat || !mapping.datasetName) throw new Error("Vui lòng điền đầy đủ các trường bắt buộc (*).");
+                // Cập nhật check
+                if (!mapping.ma_sp || !mapping.ten_sp || !mapping.gia_ban || !mapping.datasetName) throw new Error("Vui lòng điền đầy đủ các trường bắt buộc (*).");
                 if (!tempJsonData) throw new Error("Không có dữ liệu file tạm thời. Vui lòng thử lại.");
 
                 const dataToSave = tempJsonData.map((row, index) => {
-                    const giaValue = row[mapping.gia_xuat];
-                    let giaNumber = 0;
-                    let giaDisplay = giaValue;
+                    const giaBanValue = row[mapping.gia_ban]; // Đổi tên
+                    let giaBanNumber = 0; // Đổi tên
                     
-                    if (giaValue) {
-                        giaNumber = parseVietnameseNumber(giaValue);
+                    if (giaBanValue) {
+                        giaBanNumber = parseVietnameseNumber(giaBanValue);
                     }
                     
                     const ckValue = (mapping.chiet_khau ? row[mapping.chiet_khau] : '') || '';
+                    const giaXuatHDValue = (mapping.gia_xuat_hd ? row[mapping.gia_xuat_hd] : '') || ''; // MỚI
 
+                    // ##### BẮT ĐẦU THAY ĐỔI ##### (Cập nhật object lưu trữ)
                     return {
                         stt: (mapping.stt ? row[mapping.stt] : (index + 1)) || (index + 1),
                         ma_sp: row[mapping.ma_sp] || '',
                         ten_sp: row[mapping.ten_sp] || '',
                         dvt: (mapping.dvt ? row[mapping.dvt] : '') || '',
-                        gia_xuat: giaNumber,
-                        gia_display: giaDisplay,
+                        gia_ban: giaBanNumber, // Đổi tên từ gia_xuat
+                        gia_ban_display: giaBanValue, // Đổi tên từ gia_display
                         chiet_khau: getCKValue(row, mapping.chiet_khau),
                         ck_display: ckValue,
-                        quy_cach: 1 
+                        gia_xuat_hd: parseVietnameseNumber(giaXuatHDValue), // MỚI
+                        gia_xuat_hd_display: giaXuatHDValue, // MỚI
+                        quy_cach: (mapping.quy_cach ? parseInt(row[mapping.quy_cach].replace(/[.,]/g, '')) : 1) || 1 // Giữ lại
+                        // Xóa Hoạt Chất, Hàm Lượng
                     };
+                    // ##### KẾT THÚC THAY ĐỔI #####
                 });
 
                 masterDataRef.child(mapping.datasetName).set(dataToSave).then(() => {
@@ -664,6 +692,7 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
             } catch(error) { alert("Đã có lỗi xảy ra: " + error.message); }
         });
 
+        // GIỮ NGUYÊN TOÀN BỘ PHẦN XỬ LÝ ĐƠN HÀNG (Tải lên, Dán, Ánh xạ)
         uploadOrderInput.addEventListener('change', (event) => {
             const file = event.target.files[0];
             if (!file) return;
@@ -754,7 +783,7 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
             tempJsonData = null;
         });
 
-        // HÀM KIỂM TRA ĐƠN HÀNG
+        // HÀM KIỂM TRA ĐƠN HÀNG (Đã cập nhật ở lần trước, `gia_ban` và `gia_ban_display`)
         confirmOrderMappingBtn.addEventListener('click', () => {
             try {
                 const mapping = {
@@ -796,14 +825,17 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
                         
                         if (masterDataMap.has(normalizedOrderCode)) {
                             const masterItem = masterDataMap.get(normalizedOrderCode);
-                            const masterGia = parseVietnameseNumber(masterItem.gia_xuat);
+                            
+                            // Logic so sánh giá giờ sẽ dùng `gia_ban` (đã đổi ở lần trước)
+                            const masterGia = parseVietnameseNumber(masterItem.gia_ban); 
                             const masterCK = parseVietnameseNumber(masterItem.chiet_khau); 
                             const masterTenSP = masterItem.ten_sp; 
 
                             if (orderSoLuong > 0) {
-                                const gia_goc = parseVietnameseNumber(masterItem.gia_xuat) || 0;
+                                // Logic tính toán đơn hàng bán cũng dùng `gia_ban` (đã đổi ở lần trước)
+                                const gia_goc = parseVietnameseNumber(masterItem.gia_ban) || 0; 
                                 const chiet_khau_percent = parseVietnameseNumber(masterItem.chiet_khau) || 0;
-                                const quy_cach = parseInt(masterItem.quy_cach) || 1;
+                                const quy_cach = parseInt(masterItem.quy_cach) || 1; // Cột này vẫn tồn tại
                                 
                                 let gia_ban_don_vi = 0;
                                 if (chiet_khau_percent > 0) {
@@ -841,7 +873,8 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
                                 let errorMsg = `<li><b>${orderMaSP} - ${masterTenSP}</b>: `;
                                 if (!giaKhop) {
                                     const chenhLech = orderGiaXuat - masterGia;
-                                    errorMsg += `<span style="font-weight:bold; color:var(--error-color);">SAI GIÁ</span>. ĐH: ${orderGiaValue}, Gốc: ${masterItem.gia_display || masterGia}. (Lệch: ${chenhLech.toLocaleString('en-US')} đ)`;
+                                    // Hiển thị `gia_ban_display` (đã đổi ở lần trước)
+                                    errorMsg += `<span style="font-weight:bold; color:var(--error-color);">SAI GIÁ</span>. ĐH: ${orderGiaValue}, Gốc: ${masterItem.gia_ban_display || masterGia}. (Lệch: ${chenhLech.toLocaleString('en-US')} đ)`;
                                 }
                                 if (!ckKhop) {
                                     if (!giaKhop) errorMsg += " / ";
@@ -886,27 +919,32 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
         });
 
         // HÀM TẠO HÀNG (Chuẩn '12,000')
+        // ##### BẮT ĐẦU THAY ĐỔI ##### (Cập nhật cấu trúc hàng)
         function createTableRow(item, isNew = false) {
             const row = document.createElement('tr');
             
-            const giaDisplay = item.gia_display || (item.gia_xuat != null ? new Intl.NumberFormat('en-US', { maximumFractionDigits: 0, minimumFractionDigits: 0 }).format(item.gia_xuat) : '');
+            // Đổi tên biến
+            const giaBanDisplay = item.gia_ban_display || (item.gia_ban != null ? new Intl.NumberFormat('en-US', { maximumFractionDigits: 0, minimumFractionDigits: 0 }).format(item.gia_ban) : '');
             const ckDisplay = item.ck_display || (item.chiet_khau != null ? item.chiet_khau + '%' : '');
+            // Thêm biến mới
+            const giaXuatHDDisplay = item.gia_xuat_hd_display || (item.gia_xuat_hd != null ? new Intl.NumberFormat('en-US', { maximumFractionDigits: 0, minimumFractionDigits: 0 }).format(item.gia_xuat_hd) : '');
+
 
             row.innerHTML = `
                 <td contenteditable="${isNew}">${item.stt||''}</td>
                 <td contenteditable="true">${item.ma_sp||''}</td>
                 <td contenteditable="true">${item.ten_sp||''}</td>
                 <td contenteditable="true">${item.dvt||''}</td>
-                <td contenteditable="true">${giaDisplay}</td>
-                <td contenteditable="true">${ckDisplay}</td>
-                <td contenteditable="true">${item.quy_cach || '1'}</td>
-                <td><button class="delete-btn">Xóa</button></td>
+                <td contenteditable="true">${giaBanDisplay}</td> <td contenteditable="true">${ckDisplay}</td>
+                <td contenteditable="true">${giaXuatHDDisplay}</td> <td contenteditable="true">${item.quy_cach || '1'}</td> <td><button class="delete-btn">Xóa</button></td>
             `;
             row.querySelector('.delete-btn').addEventListener('click', () => row.remove());
             return row;
         }
+        // ##### KẾT THÚC THAY ĐỔI #####
 
         // HÀM LƯU BẢNG GỐC
+        // ##### BẮT ĐẦU THAY ĐỔI ##### (Cập nhật object lưu trữ, cập nhật index)
         saveToFirebaseBtn.addEventListener('click', () => {
             const datasetKey = getSelectedDatasetKey();
             if (!datasetKey) { alert("Vui lòng chọn một bảng dữ liệu để lưu."); return; }
@@ -920,15 +958,19 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
                     ma_sp: cells[1].innerText.trim(), 
                     ten_sp: cells[2].innerText.trim(),
                     dvt: cells[3].innerText.trim(), 
-                    gia_xuat: parseVietnameseNumber(cells[4].innerText) || 0,
-                    gia_display: cells[4].innerText.trim(),
+                    gia_ban: parseVietnameseNumber(cells[4].innerText) || 0, // Đổi tên
+                    gia_ban_display: cells[4].innerText.trim(), // Đổi tên
                     chiet_khau: parseVietnameseNumber(ckText.replace('%', '')) || 0,
                     ck_display: ckText,
-                    quy_cach: parseInt(cells[6].innerText.replace(/[.,]/g, '')) || 1 
+                    gia_xuat_hd: parseVietnameseNumber(cells[6].innerText) || 0, // MỚI (index 6)
+                    gia_xuat_hd_display: cells[6].innerText.trim(), // MỚI (index 6)
+                    quy_cach: parseInt(cells[7].innerText.replace(/[.,]/g, '')) || 1 // Cập nhật index (từ 8 -> 7)
+                    // Xóa Hoạt Chất, Hàm Lượng
                 };
             });
             masterDataRef.child(datasetKey).set(dataToSave).then(() => alert(`Lưu thay đổi cho bảng "${datasetKey}" thành công!`));
         });
+        // ##### KẾT THÚC THAY ĐỔI #####
         
         // HÀM XUẤT HD (POPUP) (Chuẩn '12,000')
         exportHDBtn.addEventListener('click', () => {
@@ -936,7 +978,9 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
             if (!datasetKey) { alert("Vui lòng chọn bảng dữ liệu để xuất HD."); return; }
             const rows = dataTableBody.querySelectorAll('tr');
             
-            if (rows.length === 0 || dataTableBody.querySelector('td[colspan="8"]')) { alert("Không có dữ liệu để tính toán!"); return; }
+            // ##### BẮT ĐẦU THAY ĐỔI ##### (Cập nhật colspan)
+            if (rows.length === 0 || dataTableBody.querySelector('td[colspan="9"]')) { alert("Không có dữ liệu để tính toán!"); return; }
+            // ##### KẾT THÚC THAY ĐỔI #####
 
             let htmlRows = "";
 
@@ -945,9 +989,13 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
                 try {
                     const ma_sp = cells[1].innerText;
                     const ten_sp = cells[2].innerText;
-                    const gia_goc = parseVietnameseNumber(cells[4].innerText) || 0;
+                    // Logic tính toán vẫn dựa trên "Gía bán" (cell[4])
+                    const gia_goc = parseVietnameseNumber(cells[4].innerText) || 0; 
                     const chiet_khau_percent = parseVietnameseNumber(cells[5].innerText.replace('%', '')) || 0;
-                    const quy_cach = parseInt(cells[6].innerText.replace(/[.,]/g, '')) || 1;
+                    
+                    // ##### BẮT ĐẦU THAY ĐỔI ##### (Cập nhật index cột quy cách)
+                    const quy_cach = parseInt(cells[7].innerText.replace(/[.,]/g, '')) || 1; // SỬA INDEX (từ 9 -> 7)
+                    // ##### KẾT THÚC THAY ĐỔI #####
 
                     if (quy_cach === 0) return;
 
@@ -986,11 +1034,12 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
         });
 
         // HÀM XUẤT EXCEL (BẢNG GỐC)
+        // ##### BẮT ĐẦU THAY ĐỔI ##### (Cập nhật object xuất excel)
         exportExcelBtn.addEventListener('click', () => {
             const datasetKey = getSelectedDatasetKey();
             if (!datasetKey) { alert("Vui lòng chọn bảng dữ liệu để xuất."); return; }
             const rows = dataTableBody.querySelectorAll('tr');
-            if (rows.length === 0 || dataTableBody.querySelector('td[colspan="8"]')) { alert("Không có dữ liệu để xuất!"); return; }
+            if (rows.length === 0 || dataTableBody.querySelector('td[colspan="9"]')) { alert("Không có dữ liệu để xuất!"); return; }
             
             const data = Array.from(rows).map(row => {
                 const cells = row.querySelectorAll('td');
@@ -999,9 +1048,11 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
                     'Mã SP': cells[1].innerText, 
                     'Tên sản phẩm': cells[2].innerText, 
                     'ĐVT': cells[3].innerText, 
-                    'Giá xuất HĐ (sau VAT)': cells[4].innerText,
+                    'Gía bán (Unit price)': cells[4].innerText, // Đổi tên
                     'Chiết khấu (%)': cells[5].innerText,
-                    'Quy cách': cells[6].innerText 
+                    'Gía xuất (HD) VAT': cells[6].innerText, // MỚI
+                    // Xóa Hoạt Chất, Hàm Lượng
+                    'Quy cách': cells[7].innerText // Cập nhật index
                 };
             });
             const ws = XLSX.utils.json_to_sheet(data);
@@ -1009,12 +1060,11 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
             XLSX.utils.book_append_sheet(wb, ws, datasetKey);
             XLSX.writeFile(wb, `${datasetKey}.xlsx`);
         });
+        // ##### KẾT THÚC THAY ĐỔI #####
 
-        // ##### HÀM MỚI #####
-        // XUẤT EXCEL CHO BẢNG ĐƠN HÀNG BÁN
+        // GIỮ NGUYÊN HÀM XUẤT EXCEL ĐƠN HÀNG BÁN
         exportSalesOrderBtn.addEventListener('click', () => {
             const rows = salesOrderTableBody.querySelectorAll('tr');
-            // Sửa điều kiện kiểm tra từ colspan 8 thành 7
             if (rows.length === 0 || salesOrderTableBody.querySelector('td[colspan="7"]')) {
                 alert("Không có dữ liệu để xuất!"); 
                 return; 
@@ -1041,10 +1091,9 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
                 alert("Đã xảy ra lỗi khi xuất file Excel: " + e.message);
             }
         });
-        // ##### KẾT THÚC HÀM MỚI #####
 
 
-        // HÀM HIỂN THỊ KẾT QUẢ (Chuẩn '12,000')
+        // GIỮ NGUYÊN HÀM HIỂN THỊ KẾT QUẢ
         function displayResults(correct, incorrect, salesOrderItems) {
             resultContainer.classList.remove('hidden');
             
