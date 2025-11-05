@@ -256,6 +256,7 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
                     <option value="gia_xuat_hd">Gía xuất (HD) VAT (Gốc)</option>
                 </select>
              </div>
+             
              <div class="mapping-row"><label for="mapOrderCK">Cột Chiết khấu (%) (Tùy chọn):</label><select id="mapOrderCK"></select></div>
              <div class="mapping-row"><label for="mapOrderSoLuong">Cột Số lượng (Tùy chọn):</label><select id="mapOrderSoLuong"></select></div>
              <div class="mapping-actions">
@@ -263,6 +264,8 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
                  <button id="cancelOrderMappingBtn" class="secondary-btn">Hủy</button>
             </div>
         </div>
+
+        
         <div id="resultContainer" class="hidden">
             <h2>Kết Quả Kiểm Tra</h2>
             
@@ -307,11 +310,12 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
                     <table id="customerOrderTable" style="width: 100%;">
                         <thead>
                             <tr>
-                                <th>Mã (ĐH)</th>
-                                <th>Tên sản phẩm (Gốc)</th>
-                                <th>Giá bán (ĐH)</th>
-                                <th>Chiết khấu (ĐH)</th>
-                                <th>Số lượng (ĐH)</th>
+                                <th>STT</th>
+                                <th>MÃ</th>
+                                <th>Tên sản phẩm</th>
+                                <th>Gía bán (Gốc)</th>
+                                <th>Chiết khấu (Gốc)</th>
+                                <th>Sản lượng</th>
                                 <th>Gía xuất (HD) VAT (Gốc)</th>
                                 <th>Tổng tiền (Gốc)</th>
                             </tr>
@@ -321,8 +325,7 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
                     </table>
                 </div>
             </div>
-
-        </div>
+            </div>
     </div>
     
     <div id="helpModal" class="modal">
@@ -351,10 +354,15 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
                  <li><strong>Bước 1:</strong> Dùng menu thả xuống để chọn đúng Bảng Dữ Liệu Chuẩn bạn muốn dùng để đối chiếu.</li>
                  <li><strong>Bước 2:</strong> Chọn file đơn hàng hoặc dán dữ liệu trực tiếp.</li>
                  <li><strong>Bước 3:</strong> Ánh xạ cột (Mã, Tên, Giá, và cột "Số lượng" mới).</li>
-                 <li><strong>Bước 3.1 (Quan trọng):</strong> Chọn xem "Cột Giá (Đơn Hàng)" sẽ được so sánh với "Gía bán (Unit price) (Gốc)" hay "Gía xuất (HD) VAT (Gốc)".</li>
+                 <li><strong>Bước 3.1 (Quan trọng):</strong> Chọn xem "Cột Giá (Đơn Hàng)" (dùng cho tab "Kết Quả So Giá") sẽ được so sánh với "Gía bán (Gốc)" hay "Gía xuất (HD) VAT (Gốc)".</li>
                  <li><strong>Bước 4:</strong> Nhấn "Xác Nhận & Kiểm Tra".</li>
-                 <li><strong>Bước 5:</strong> Xem kết quả ở 3 tab.</li>
-                 <li><strong>Chuẩn hóa mã SP:</strong> Hệ thống tự động loại bỏ số 0 ở đầu mã sản phẩm để so sánh.</li>
+                 <li><strong>Bước 5:</strong> Xem kết quả ở 3 tab.
+                    <ul>
+                        <li><b>Kết Quả So Giá:</b> So sánh giá bạn ánh xạ với giá gốc bạn chọn.</li>
+                        <li><b>Đơn Hàng Bán:</b> Tính toán giá bán lẻ (đã qua quy cách, chiết khấu, VAT 5%).</li>
+                        <li><b>Đơn Hàng Khách Hàng:</b> Tạo đơn hàng mới dựa trên số lượng của khách, nhưng sử dụng <b>giá và chiết khấu từ Bảng Dữ Liệu Gốc</b>.</li>
+                    </ul>
+                 </li>
             </ul>
             <h4>3. Sử dụng tính năng Dán Dữ liệu</h4>
             <ul>
@@ -806,7 +814,7 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
         });
 
         // HÀM KIỂM TRA ĐƠN HÀNG
-        // ##### BẮT ĐẦU THAY ĐỔI ##### (Đọc giá trị dropdown mới và áp dụng logic)
+        // ##### BẮT ĐẦU THAY ĐỔI ##### (Cập nhật logic cho customerOrderData)
         confirmOrderMappingBtn.addEventListener('click', () => {
             try {
                 const mapping = {
@@ -817,7 +825,6 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
                     so_luong: document.getElementById('mapOrderSoLuong').value
                 };
                 
-                // ĐỌC GIÁ TRỊ TỪ DROPDOWN MỚI
                 const compareColumn = document.getElementById('mapOrderCompareAgainst').value;
 
                 if (!mapping.ma_sp || !mapping.ten_sp || !mapping.gia_xuat) throw new Error("Vui lòng ánh xạ đầy đủ các cột bắt buộc (*).");
@@ -847,7 +854,6 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
                         const orderGiaValue = orderItem[mapping.gia_xuat];
                         const orderGiaXuat = parseVietnameseNumber(orderGiaValue);
                         const orderChietKhau = getCKValue(orderItem, mapping.chiet_khau); 
-                        const orderCKValue = (mapping.chiet_khau ? orderItem[mapping.chiet_khau] : '') || '';
                         const orderSoLuong = (mapping.so_luong ? parseVietnameseNumber(orderItem[mapping.so_luong]) : 0) || 0;
                         
                         const normalizedOrderCode = normalizeProductCode(orderMaSP);
@@ -855,9 +861,8 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
                         if (masterDataMap.has(normalizedOrderCode)) {
                             const masterItem = masterDataMap.get(normalizedOrderCode);
                             
-                            // ##### BẮT ĐẦU THAY ĐỔI ##### (Chọn cột giá gốc để so sánh)
+                            // Logic cho TAB 1: KẾT QUẢ SO GIÁ
                             let masterGia, masterGiaDisplay;
-
                             if (compareColumn === 'gia_xuat_hd') {
                                 masterGia = parseVietnameseNumber(masterItem.gia_xuat_hd);
                                 masterGiaDisplay = masterItem.gia_xuat_hd_display || masterGia.toLocaleString('en-US');
@@ -865,12 +870,10 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
                                 masterGia = parseVietnameseNumber(masterItem.gia_ban); 
                                 masterGiaDisplay = masterItem.gia_ban_display || masterGia.toLocaleString('en-US');
                             }
-                            // ##### KẾT THÚC THAY ĐỔI #####
-
                             const masterCK = parseVietnameseNumber(masterItem.chiet_khau); 
                             const masterTenSP = masterItem.ten_sp; 
 
-                            // Logic tính Đơn Hàng Bán (giữ nguyên, luôn dựa trên gia_ban)
+                            // Logic tính TAB 2: ĐƠN HÀNG BÁN (giữ nguyên)
                             if (orderSoLuong > 0) {
                                 const gia_goc = parseVietnameseNumber(masterItem.gia_ban) || 0; 
                                 const chiet_khau_percent = parseVietnameseNumber(masterItem.chiet_khau) || 0;
@@ -900,22 +903,26 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
                                 });
                             }
 
-                            // Logic tính Đơn Hàng Khách Hàng (giữ nguyên, luôn dựa trên gia_xuat_hd)
+                            // Logic tính TAB 3: ĐƠN HÀNG KHÁCH HÀNG (ĐÃ THAY ĐỔI)
                             const masterGiaXuatHD = parseVietnameseNumber(masterItem.gia_xuat_hd) || 0;
                             const tongTienGoc = masterGiaXuatHD * orderSoLuong;
-
+                            
                             customerOrderData.push({
+                                stt: customerOrderData.length + 1,
                                 ma_sp: orderMaSP,
                                 ten_sp: masterTenSP,
-                                gia_ban_dh: orderGiaValue,
-                                chiet_khau_dh: orderCKValue,
+                                // THAY ĐỔI: Lấy giá bán từ GỐC
+                                gia_ban_dh: masterItem.gia_ban_display || parseVietnameseNumber(masterItem.gia_ban).toLocaleString('en-US'),
+                                // THAY ĐỔI: Lấy chiết khấu từ GỐC
+                                chiet_khau_dh: masterItem.ck_display || (masterItem.chiet_khau ? masterItem.chiet_khau + '%' : '0%'),
                                 so_luong_dh: orderSoLuong,
                                 gia_xuat_hd_goc: masterGiaXuatHD,
                                 tong_tien: tongTienGoc
                             });
+                            // KẾT THÚC THAY ĐỔI
 
 
-                            // Logic so sánh (DÙNG BIẾN masterGia MỚI)
+                            // Logic so sánh cho TAB 1
                             const giaKhop = Math.abs(orderGiaXuat - masterGia) < 0.001;
                             const ckKhop = !mapping.chiet_khau || (Math.abs(orderChietKhau - masterCK) < 0.001);
 
@@ -928,9 +935,7 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
                                 let errorMsg = `<li><b>${orderMaSP} - ${masterTenSP}</b>: `;
                                 if (!giaKhop) {
                                     const chenhLech = orderGiaXuat - masterGia;
-                                    // ##### BẮT ĐẦU THAY ĐỔI ##### (Sử dụng masterGiaDisplay)
                                     errorMsg += `<span style="font-weight:bold; color:var(--error-color);">SAI GIÁ</span>. ĐH: ${orderGiaValue}, Gốc: ${masterGiaDisplay}. (Lệch: ${chenhLech.toLocaleString('en-US')} đ)`;
-                                    // ##### KẾT THÚC THAY ĐỔI #####
                                 }
                                 if (!ckKhop) {
                                     if (!giaKhop) errorMsg += " / ";
@@ -956,7 +961,6 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
                         }
                     });
                     
-                    // Truyền mảng mới vào hàm display
                     displayResults(correctItems, incorrectItems, salesOrderData, customerOrderData);
                     cancelOrderMappingBtn.click();
                 });
@@ -1134,10 +1138,11 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
             }
         });
 
-        // GIỮ NGUYÊN HÀM XUẤT EXCEL ĐƠN HÀNG KHÁCH HÀNG
+        // ##### BẮT ĐẦU THAY ĐỔI ##### (Cập nhật hàm xuất excel cho tab mới)
         exportCustomerOrderBtn.addEventListener('click', () => {
             const rows = customerOrderTableBody.querySelectorAll('tr');
-            if (rows.length === 0 || customerOrderTableBody.querySelector('td[colspan="7"]')) {
+            // Cập nhật colspan
+            if (rows.length === 0 || customerOrderTableBody.querySelector('td[colspan="8"]')) {
                 alert("Không có dữ liệu để xuất!"); 
                 return; 
             }
@@ -1145,34 +1150,37 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
             try {
                 const data = Array.from(rows).map(row => {
                     const cells = row.querySelectorAll('td');
+                    // Cập nhật tiêu đề và chỉ số
                     return { 
-                        'Mã (ĐH)': cells[0].innerText, 
-                        'Tên sản phẩm (Gốc)': cells[1].innerText, 
-                        'Giá bán (ĐH)': cells[2].innerText, 
-                        'Chiết khấu (ĐH)': cells[3].innerText, 
-                        'Số lượng (ĐH)': cells[4].innerText,
-                        'Gía xuất (HD) VAT (Gốc)': cells[5].innerText,
-                        'Tổng tiền (Gốc)': cells[6].innerText 
+                        'STT': cells[0].innerText, 
+                        'MÃ': cells[1].innerText, 
+                        'Tên sản phẩm': cells[2].innerText, 
+                        'Gía bán (Gốc)': cells[3].innerText, 
+                        'Chiết khấu (Gốc)': cells[4].innerText,
+                        'Sản lượng': cells[5].innerText,
+                        'Gía xuất (HD) VAT (Gốc)': cells[6].innerText,
+                        'Tổng tiền (Gốc)': cells[7].innerText 
                     };
                 });
                 const ws = XLSX.utils.json_to_sheet(data);
                 const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, "Don_Hang_Khach_Hang");
-                XLSX.writeFile(wb, `Don_Hang_Khach_Hang.xlsx`);
+                XLSX.utils.book_append_sheet(wb, ws, "Don_Hang_Khach_Hang_Goc");
+                XLSX.writeFile(wb, `Don_Hang_Khach_Hang_Goc.xlsx`);
             } catch (e) {
                 alert("Đã xảy ra lỗi khi xuất file Excel: " + e.message);
             }
         });
+        // ##### KẾT THÚC THAY ĐỔI #####
 
 
-        // GIỮ NGUYÊN HÀM HIỂN THỊ KẾT QUẢ
+        // ##### BẮT ĐẦU THAY ĐỔI ##### (Cập nhật hàm hiển thị)
         function displayResults(correct, incorrect, salesOrderItems, customerOrderItems) {
             resultContainer.classList.remove('hidden');
             
-            // Tab 1: Kết Quả So Giá
+            // Tab 1: Kết Quả So Giá (Giữ nguyên)
             resultsDiv.innerHTML = `<div class="result-section correct"><h3 style="color: var(--success-color);">✅ ĐÚNG (${correct.length})</h3><ul>${correct.length>0?correct.join(''):'<li>Không có.</li>'}</ul></div><div class="result-section incorrect"><h3 style="color: var(--error-color);">❌ SAI / KHÔNG TÌM THẤY (${incorrect.length})</h3><ul>${incorrect.length>0?incorrect.join(''):'<li>Không có.</li>'}</ul></div>`;
 
-            // Tab 2: Đơn Hàng Bán
+            // Tab 2: Đơn Hàng Bán (Giữ nguyên)
             salesOrderTableBody.innerHTML = '';
             if (salesOrderItems && salesOrderItems.length > 0) {
                 salesOrderItems.forEach(item => {
@@ -1192,12 +1200,14 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
                 salesOrderTableBody.innerHTML = '<tr><td colspan="7" style="text-align: center;">Không có dữ liệu đơn hàng bán (cần ánh xạ cột "Số lượng" và sản phẩm phải có trong dữ liệu gốc).</td></tr>';
             }
 
-            // Tab 3: Đơn Hàng Khách Hàng (MỚI)
+            // Tab 3: Đơn Hàng Khách Hàng (Cập nhật)
             customerOrderTableBody.innerHTML = '';
             if (customerOrderItems && customerOrderItems.length > 0) {
                 customerOrderItems.forEach(item => {
                     const row = document.createElement('tr');
+                    // Thêm STT và cập nhật các cột khác
                     row.innerHTML = `
+                        <td>${item.stt}</td>
                         <td>${item.ma_sp}</td>
                         <td>${item.ten_sp}</td>
                         <td style="text-align: right;">${item.gia_ban_dh}</td>
@@ -1209,7 +1219,8 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
                     customerOrderTableBody.appendChild(row);
                 });
             } else {
-                customerOrderTableBody.innerHTML = '<tr><td colspan="7" style="text-align: center;">Không có dữ liệu đơn hàng (cần ánh xạ cột "Số lượng" và sản phẩm phải có trong dữ liệu gốc).</td></tr>';
+                // Cập nhật colspan
+                customerOrderTableBody.innerHTML = '<tr><td colspan="8" style="text-align: center;">Không có dữ liệu đơn hàng (cần ánh xạ cột "Số lượng" và sản phẩm phải có trong dữ liệu gốc).</td></tr>';
             }
 
             // Đặt lại tab mặc định là "Kết Quả So Giá"
@@ -1219,6 +1230,7 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
             resultTabButtonsContainer.querySelector('[data-tab="result-check-tab"]').classList.add('active');
             document.getElementById('result-check-tab').classList.add('active');
         }
+        // ##### KẾT THÚC THAY ĐỔI #####
 
         document.addEventListener('DOMContentLoaded', populateDatasetSelector);
     </script>
