@@ -1138,35 +1138,36 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
         });
 
         // HÀM XUẤT EXCEL ĐƠN HÀNG KHÁCH HÀNG
-        exportCustomerOrderBtn.addEventListener('click', () => {
-            const rows = customerOrderTableBody.querySelectorAll('tr');
-            if (rows.length === 0 || customerOrderTableBody.querySelector('td[colspan="8"]')) {
-                alert("Không có dữ liệu để xuất!"); 
-                return; 
-            }
-            
-            try {
-                const data = Array.from(rows).map(row => {
-                    const cells = row.querySelectorAll('td');
-                    return { 
-                        'STT': cells[0].innerText, 
-                        'MÃ': cells[1].innerText, 
-                        'Tên sản phẩm': cells[2].innerText, 
-                        'Gía bán (Gốc)': cells[3].innerText, 
-                        'Chiết khấu (Gốc)': cells[4].innerText,
-                        'Sản lượng': cells[5].innerText,
-                        'Gía xuất (HD) VAT (Gốc)': cells[6].innerText,
-                        'Tổng tiền (Gốc)': cells[7].innerText 
-                    };
-                });
-                const ws = XLSX.utils.json_to_sheet(data);
-                const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, "Don_Hang_Khach_Hang_Goc");
-                XSXL.writeFile(wb, `Don_Hang_Khach_Hang_Goc.xlsx`);
-            } catch (e) {
-                alert("Đã xảy ra lỗi khi xuất file Excel: " + e.message);
-            }
+       // HÀM XUẤT EXCEL ĐƠN HÀNG KHÁCH HÀNG
+exportCustomerOrderBtn.addEventListener('click', () => {
+    const rows = customerOrderTableBody.querySelectorAll('tr');
+    if (rows.length === 0 || customerOrderTableBody.querySelector('td[colspan="8"]')) {
+        alert("Không có dữ liệu để xuất!"); 
+        return; 
+    }
+    
+    try {
+        const data = Array.from(rows).map(row => {
+            const cells = row.querySelectorAll('td');
+            return { 
+                'STT': cells[0].innerText, 
+                'MÃ': cells[1].innerText, 
+                'Tên sản phẩm': cells[2].innerText, 
+                'Gía bán (Gốc)': cells[3].innerText, 
+                'Chiết khấu (Gốc)': cells[4].innerText,
+                'Sản lượng': cells[5].innerText,
+                'Gía xuất (HD) VAT (Gốc)': cells[6].innerText,
+                'Tổng tiền (Gốc)': cells[7].innerText 
+            };
         });
+        const ws = XLSX.utils.json_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Don_Hang_Khach_Hang_Goc");
+        XLSX.writeFile(wb, `Don_Hang_Khach_Hang_Goc.xlsx`); // ĐÃ SỬA LỖI CHÍNH TẢ Ở ĐÂY
+    } catch (e) {
+        alert("Đã xảy ra lỗi khi xuất file Excel: " + e.message);
+    }
+});
 
         // HÀM HIỂN THỊ KẾT QUẢ
         function displayResults(correct, incorrect, salesOrderItems, customerOrderItems) {
@@ -1228,3 +1229,4 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
     </script>
 </body>
 </html>
+
