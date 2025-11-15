@@ -3,12 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ứng Dụng Kiểm Tra Đơn Hàng Chuyên Nghiệp</title>
+    <title>Ứng Dụng Kiểm Tra Đơn Hàng & Phân Tích Tồn Kho - IDECO</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
     
     <style>
-        /* GIỮ NGUYÊN TOÀN BỘ CSS */
         @import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap');
         :root {
             --primary-color: #0052cc; --secondary-color: #6c757d; --background-color: #f4f5f7;
@@ -57,7 +56,6 @@
         .hidden { display: none !important; }
         #mappingSection, #mappingOrderSection { border: 2px solid var(--primary-color); border-radius: 8px; padding: 24px; margin-top: 24px; background: var(--white-color); }
         .mapping-row { display: flex; align-items: center; margin-bottom: 16px; gap: 12px;}
-        /* Tăng độ rộng label để chứa tên cột mới */
         .mapping-row label { flex-basis: 250px; text-align: right; font-weight: 600; }
         .mapping-row select, .mapping-row input { flex-grow: 1; }
         .mapping-actions { text-align: right; margin-top: 24px; }
@@ -138,12 +136,57 @@
             font-size: 14px;
             color: #856404;
         }
+        
+        .inventory-section {
+            border: 2px solid #28a745;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 24px;
+            background: #f8fff9;
+        }
+        
+        .analysis-section {
+            border: 2px solid #17a2b8;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 24px;
+            background: #f0f9ff;
+        }
+        
+        .delivery-order-table, .purchase-order-table {
+            margin-top: 16px;
+        }
+        
+        .analysis-tabs {
+            margin-top: 16px;
+        }
+        
+        .match-info {
+            background-color: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            border-radius: 4px;
+            padding: 8px 12px;
+            margin: 8px 0;
+            font-size: 12px;
+            color: #0066cc;
+        }
+
+        .debug-info {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 12px;
+            color: #6c757d;
+            font-family: monospace;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <button id="helpBtn">❓ Hướng Dẫn</button>
-        <h1>Trình Kiểm Tra Đơn Hàng Gía - IDECO</h1>
+        <h1>Trình Kiểm Tra Đơn Hàng & Phân Tích Tồn Kho - IDECO</h1>
         
         <h2>Quản lý Dữ liệu Chuẩn</h2>
         <div class="selector-wrapper">
@@ -162,16 +205,15 @@
         <div id="mappingSection" class="hidden">
             <h3>Bước 2: Ánh xạ cột</h3>
              
-             <div class="mapping-row"><label for="mapMaSP">Mã (item product) (*):</label><select id="mapMaSP"></select></div>
-             <div class="mapping-row"><label for="mapTenSP">Tên sản phẩm ( product name) (*):</label><select id="mapTenSP"></select></div>
-             <div class="mapping-row"><label for="mapGia">Gía bán ( Unit price) (*):</label><select id="mapGia"></select></div>
-             <hr>
-             <div class="mapping-row"><label for="mapSTT">STT (Tùy chọn):</label><select id="mapSTT"></select></div>
-             <div class="mapping-row"><label for="mapDVT">Cột ĐVT (Tùu chọn):</label><select id="mapDVT"></select></div>
-             <div class="mapping-row"><label for="mapQuyCach">Cột Quy Cách (Tùy chọn):</label><select id="mapQuyCach"></select></div>
+             <div class="mapping-row"><label for="mapSTT">STT (*):</label><select id="mapSTT"></select></div>
+             <div class="mapping-row"><label for="mapMaSP">Mã SP (*):</label><select id="mapMaSP"></select></div>
+             <div class="mapping-row"><label for="mapMaERP">Mã ERP (*):</label><select id="mapMaERP"></select></div>
+             <div class="mapping-row"><label for="mapTenSP">Tên sản phẩm (*):</label><select id="mapTenSP"></select></div>
+             <div class="mapping-row"><label for="mapGia">Giá bán (*):</label><select id="mapGia"></select></div>
+             <div class="mapping-row"><label for="mapCK">Chiết khấu (*):</label><select id="mapCK"></select></div>
+             <div class="mapping-row"><label for="mapGiaXuatHD">Giá xuất VAT (*):</label><select id="mapGiaXuatHD"></select></div>
+             <div class="mapping-row"><label for="mapQuyCach">Quy cách (*):</label><select id="mapQuyCach"></select></div>
              
-             <div class="mapping-row"><label for="mapCK">Chiết khấu ( Discount percent) (Tùy chọn):</label><select id="mapCK"></select></div>
-             <div class="mapping-row"><label for="mapGiaXuatHD">Gía xuất (HD) VAT (whole sales price) (Tùy chọn):</label><select id="mapGiaXuatHD"></select></div>
              <div class="mapping-row"><label for="datasetNameInput">Đặt tên bảng dữ liệu (*):</label><input type="text" id="datasetNameInput" placeholder="VD: Bảng giá sỉ T10/2025"></div>
              <div class="mapping-actions">
                  <button id="confirmMappingBtn" class="success-btn">Xác Nhận & Lưu</button>
@@ -192,14 +234,64 @@
                     <tr>
                         <th>STT</th>
                         <th>Mã SP</th>
+                        <th>Mã ERP</th>
                         <th>Tên sản phẩm</th>
-                        <th>ĐVT</th>
-                        <th>Gía bán (Unit price)</th> <th>Chiết khấu (%)</th>
-                        <th>Gía xuất (HD) VAT</th> <th>Quy cách</th> <th>Hành động</th>
-                        </tr>
+                        <th>Giá bán</th>
+                        <th>Chiết khấu (%)</th>
+                        <th>Giá xuất VAT</th>
+                        <th>Quy cách</th>
+                        <th>Hành động</th>
+                    </tr>
                 </thead>
                 <tbody></tbody>
             </table>
+        </div>
+
+        <hr>
+
+        <div class="inventory-section">
+            <h2>📦 Quản lý Tồn Kho</h2>
+            <div class="controls">
+                <label for="uploadInventory" class="file-upload">
+                    <span>📂 Tải lên file Tồn Kho (Excel/CSV)</span>
+                    <input type="file" id="uploadInventory" accept=".xlsx, .xls, .csv">
+                </label>
+            </div>
+            
+            <div id="inventoryMappingSection" class="hidden">
+                <h3>Ánh xạ cột cho file Tồn Kho</h3>
+                <div class="warning-note">
+                    <strong>💡 Lưu ý quan trọng:</strong> Hệ thống sẽ so sánh MÃ SP từ tồn kho với MÃ ERP từ đơn hàng.
+                </div>
+                <div class="mapping-row"><label for="mapInvSTT">STT (Tùy chọn):</label><select id="mapInvSTT"></select></div>
+                <div class="mapping-row"><label for="mapInvMaSP">Mã SP (*):</label><select id="mapInvMaSP"></select></div>
+                <div class="mapping-row"><label for="mapInvTenSP">Tên SP (Tùy chọn):</label><select id="mapInvTenSP"></select></div>
+                <div class="mapping-row"><label for="mapInvTonCuoi">Tồn cuối kỳ (*):</label><select id="mapInvTonCuoi"></select></div>
+                <div class="mapping-actions">
+                    <button id="confirmInventoryMappingBtn" class="success-btn">Xác Nhận & Lưu</button>
+                    <button id="cancelInventoryMappingBtn" class="secondary-btn">Hủy</button>
+                </div>
+            </div>
+            
+            <div id="inventoryTableContainer" class="hidden">
+                <h3>Dữ liệu Tồn Kho Đã Tải</h3>
+                <div class="table-container">
+                    <table id="inventoryTable">
+                        <thead>
+                            <tr>
+                                <th>STT</th>
+                                <th>Mã SP</th>
+                                <th>Tên SP</th>
+                                <th>Tồn cuối kỳ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventoryTableBody"></tbody>
+                    </table>
+                </div>
+                <div class="table-actions">
+                    <button id="analyzeInventoryBtn" class="success-btn">🔍 Phân Tích Tồn Kho vs Đơn Hàng</button>
+                </div>
+            </div>
         </div>
 
         <hr>
@@ -227,11 +319,7 @@
             <div class="controls">
                 <div class="paste-area">
                     <label><strong>📋 Dán dữ liệu từ Excel/Google Sheets:</strong></label>
-                    <textarea id="pasteData" placeholder="Dán dữ liệu bảng tính vào đây (bao gồm cả tiêu đề cột)...
-Ví dụ:
-STT	Mã sản phẩm	Tên sản phẩm	Giá
-1	SP001	Sản phẩm A	100,000
-2	SP002	Sản phẩm B	200,000"></textarea>
+                    <textarea id="pasteData" placeholder="Dán dữ liệu bảng tính vào đây (bao gồm cả tiêu đề cột)..."></textarea>
                     <div class="paste-instruction">
                         💡 <strong>Hướng dẫn:</strong> Copy toàn bộ bảng từ Excel hoặc Google Sheets (bao gồm cả dòng tiêu đề) và dán vào ô trên.
                     </div>
@@ -243,7 +331,7 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
         <div id="mappingOrderSection" class="hidden">
              <h3>Bước 2: Ánh xạ cột cho file Đơn Hàng</h3>
              <div class="warning-note">
-                 <strong>💡 Lưu ý:</strong> Hệ thống tự động chuẩn hóa mã sản phẩm (loại bỏ số 0 ở đầu) để so sánh. Ví dụ: "00500321" → "500321"
+                 <strong>💡 Lưu ý QUAN TRỌNG:</strong> Để phân tích tồn kho hoạt động, bạn PHẢI ánh xạ cột "Số lượng".
              </div>
              <div class="mapping-row"><label for="mapOrderMaSP">Cột Mã SP (*):</label><select id="mapOrderMaSP"></select></div>
              <div class="mapping-row"><label for="mapOrderTenSP">Cột Tên sản phẩm (*):</label><select id="mapOrderTenSP"></select></div>
@@ -252,13 +340,13 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
              <div class="mapping-row" style="background-color: #e9f2ff; padding: 10px; border-radius: 5px;">
                 <label for="mapOrderCompareAgainst" style="color:var(--primary-color);">So sánh giá này với (*):</label>
                 <select id="mapOrderCompareAgainst">
-                    <option value="gia_ban">Gía bán (Unit price) (Gốc)</option>
-                    <option value="gia_xuat_hd">Gía xuất (HD) VAT (Gốc)</option>
+                    <option value="gia_ban">Giá bán (Gốc)</option>
+                    <option value="gia_xuat_hd">Giá xuất VAT (Gốc)</option>
                 </select>
              </div>
              
              <div class="mapping-row"><label for="mapOrderCK">Cột Chiết khấu (%) (Tùy chọn):</label><select id="mapOrderCK"></select></div>
-             <div class="mapping-row"><label for="mapOrderSoLuong">Cột Số lượng (Tùy chọn):</label><select id="mapOrderSoLuong"></select></div>
+             <div class="mapping-row"><label for="mapOrderSoLuong">Cột Số lượng (*):</label><select id="mapOrderSoLuong"></select></div>
              <div class="mapping-actions">
                  <button id="confirmOrderMappingBtn" class="success-btn">Xác Nhận & Kiểm Tra</button>
                  <button id="cancelOrderMappingBtn" class="secondary-btn">Hủy</button>
@@ -273,6 +361,7 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
                 <button class="tab-button active" data-tab="result-check-tab">📊 Kết Quả So Giá</button>
                 <button class="tab-button" data-tab="result-order-tab">🛒 Đơn Hàng Bán</button>
                 <button class="tab-button" data-tab="result-customer-order-tab">👤 Đơn Hàng Khách Hàng</button>
+                <button class="tab-button" data-tab="result-inventory-tab">📦 Phân Tích Tồn Kho</button>
             </div>
 
             <div class="tab-content active" id="result-check-tab">
@@ -289,6 +378,7 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
                             <tr>
                                 <th>STT</th>
                                 <th>Mã</th>
+                                <th>Mã ERP</th>
                                 <th>Tên sản phẩm</th>
                                 <th>Quy cách đơn vị mua</th>
                                 <th>Giá bán đơn vị</th>
@@ -312,11 +402,12 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
                             <tr>
                                 <th>STT</th>
                                 <th>MÃ</th>
+                                <th>MÃ ERP</th>
                                 <th>Tên sản phẩm</th>
-                                <th>Gía bán (Gốc)</th>
+                                <th>Giá bán (Gốc)</th>
                                 <th>Chiết khấu (Gốc)</th>
                                 <th>Sản lượng</th>
-                                <th>Gía xuất (HD) VAT (Gốc)</th>
+                                <th>Giá xuất VAT (Gốc)</th>
                                 <th>Tổng tiền (Gốc)</th>
                             </tr>
                         </thead>
@@ -325,7 +416,74 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
                     </table>
                 </div>
             </div>
+            
+            <div class="tab-content" id="result-inventory-tab">
+                <div class="analysis-section">
+                    <h3>Phân Tích Tồn Kho & Đơn Hàng</h3>
+                    
+                    <div id="inventoryAnalysisResults">
+                    </div>
+                    
+                    <div id="debugInfo" class="debug-info" style="display: none;">
+                    </div>
+                    
+                    <div class="analysis-tabs">
+                        <div class="tab-buttons">
+                            <button class="tab-button active" data-tab="delivery-order-tab">📦 Đơn Hàng Tạm Giao</button>
+                            <button class="tab-button" data-tab="purchase-order-tab">🛒 Đơn Cần Đặt NCC</button>
+                        </div>
+                        
+                        <div class="tab-content active" id="delivery-order-tab">
+                            <div class="table-actions" style="justify-content: flex-end; margin-bottom: 16px;">
+                                <button id="exportDeliveryOrderBtn" class="success-btn">📄 Xuất Excel Đơn Hàng Tạm Giao</button>
+                            </div>
+                            <div class="table-container" style="max-height: 500px;">
+                                <table id="deliveryOrderTable" style="width: 100%;">
+                                    <thead>
+                                        <tr>
+                                            <th>STT</th>
+                                            <th>Mã SP</th>
+                                            <th>Mã ERP</th>
+                                            <th>Tên sản phẩm</th>
+                                            <th>Số lượng đặt hàng</th>
+                                            <th>Tồn kho hiện có</th>
+                                            <th>Số lượng tạm giao</th>
+                                            <th>Ghi chú</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="deliveryOrderTableBody">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <div class="tab-content" id="purchase-order-tab">
+                            <div class="table-actions" style="justify-content: flex-end; margin-bottom: 16px;">
+                                <button id="exportPurchaseOrderBtn" class="success-btn">📄 Xuất Excel Đơn Cần Đặt NCC</button>
+                            </div>
+                            <div class="table-container" style="max-height: 500px;">
+                                <table id="purchaseOrderTable" style="width: 100%;">
+                                    <thead>
+                                        <tr>
+                                            <th>STT</th>
+                                            <th>Mã SP</th>
+                                            <th>Mã ERP</th>
+                                            <th>Tên sản phẩm</th>
+                                            <th>Số lượng đặt hàng</th>
+                                            <th>Tồn kho hiện có</th>
+                                            <th>Số lượng cần đặt thêm</th>
+                                            <th>Ghi chú</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="purchaseOrderTableBody">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
+        </div>
     </div>
     
     <div id="helpModal" class="modal">
@@ -337,39 +495,16 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
                 <li><strong>Tải Lên Bảng Dữ Liệu Mới:</strong>
                     <ol>
                         <li>Nhấn vào ô "Tải lên file Excel mới" và chọn file của bạn.</li>
-                        <li>Một khu vực <strong>"Tham chiếu cột "</strong> sẽ hiện ra ngay trên trang.</li>
                         <li>Ánh xạ các cột bắt buộc (*).</li>
-                        <li>Các cột như `Gía xuất (HD) VAT`, `ĐVT`, `Quy Cách` là tùy chọn. (Cần có `Quy Cách` để chạy chức năng "Xuất HD" và "Đơn Hàng Bán").</li>
                         <li>Nhập tên cho bảng dữ liệu mới và nhấn "Xác Nhận & Lưu".</li>
                     </ol>
                 </li>
-                 <li><strong>Chọn Bảng Dữ Liệu:</strong> Dùng menu thả xuống để xem, sửa, hoặc dùng làm tiêu chuẩn đối chiếu.</li>
-                <li><strong>Xóa Bảng Dữ Liệu:</strong> Chọn một bảng từ menu, sau đó nhấn "Xóa Bảng Dữ Liệu Này".</li>
-                <li><strong>Thao tác trên bảng:</strong> Các nút "Thêm Hàng", "Lưu Thay Đổi", "Xuất Excel" đều sẽ làm việc trên bảng dữ liệu bạn đang chọn.</li>
-                <li><strong>Cột "Quy cách", "Gía xuất (HD) VAT":</strong> Bạn có thể nhập/sửa trực tiếp vào các cột này. Nhấn "Lưu Thay Đổi" để lưu giá trị này vào cơ sở dữ liệu.</li>
-                <li><strong>Nút "Xuất HD":</strong> Sau khi đã nhập "Quy cách", nhấn nút này để **hiện một bảng tính toán** giá bán đơn vị (dựa trên cột "Gía bán (Unit price)").</li>
             </ul>
-             <h4>2. Kiểm Tra Đơn Hàng</h4>
+            <h4>2. Phân Tích Tồn Kho</h4>
             <ul>
-                 <li><strong>Bước 1:</strong> Dùng menu thả xuống để chọn đúng Bảng Dữ Liệu Chuẩn bạn muốn dùng để đối chiếu.</li>
-                 <li><strong>Bước 2:</strong> Chọn file đơn hàng hoặc dán dữ liệu trực tiếp.</li>
-                 <li><strong>Bước 3:</strong> Ánh xạ cột (Mã, Tên, Giá, và cột "Số lượng" mới).</li>
-                 <li><strong>Bước 3.1 (Quan trọng):</strong> Chọn xem "Cột Giá (Đơn Hàng)" (dùng cho tab "Kết Quả So Giá") sẽ được so sánh với "Gía bán (Gốc)" hay "Gía xuất (HD) VAT (Gốc)".</li>
-                 <li><strong>Bước 4:</strong> Nhấn "Xác Nhận & Kiểm Tra".</li>
-                 <li><strong>Bước 5:</strong> Xem kết quả ở 3 tab.
-                    <ul>
-                        <li><b>Kết Quả So Giá:</b> So sánh giá bạn ánh xạ với giá gốc bạn chọn.</li>
-                        <li><b>Đơn Hàng Bán:</b> Tính toán giá bán lẻ (đã qua quy cách, chiết khấu, VAT 5%).</li>
-                        <li><b>Đơn Hàng Khách Hàng:</b> Tạo đơn hàng mới dựa trên số lượng của khách, nhưng sử dụng <b>giá và chiết khấu từ Bảng Dữ Liệu Gốc</b>.</li>
-                    </ul>
-                 </li>
-            </ul>
-            <h4>3. Sử dụng tính năng Dán Dữ liệu</h4>
-            <ul>
-                <li><strong>Bước 1:</strong> Chọn tab "Dán Dữ Liệu"</li>
-                <li><strong>Bước 2:</strong> Copy toàn bộ bảng từ Excel hoặc Google Sheets (bao gồm cả dòng tiêu đề)</li>
-                <li><strong>Bước 3:</strong> Dán vào ô văn bản và nhấn "Xử Lý & Ánh Xạ Cột"</li>
-                <li><strong>Bước 4:</strong> Ánh xạ cột tương tự như với file upload (bao gồm cả việc chọn cột giá gốc để so sánh).</li>
+                <li>Hệ thống sẽ so sánh MÃ SP từ tồn kho với MÃ ERP từ đơn hàng</li>
+                <li>Đơn hàng tạm giao: Sản phẩm có thể giao ngay từ tồn kho</li>
+                <li>Đơn cần đặt NCC: Sản phẩm cần đặt thêm từ nhà cung cấp</li>
             </ul>
         </div>
     </div>
@@ -397,6 +532,7 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
     <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-database.js"></script>
 
     <script>
+        // CẤU HÌNH FIREBASE
         const firebaseConfig = {
             apiKey: "AIzaSyDtxpm3ZGde1Zl0BtTalGAsY9XFGQyncjQ",
             authDomain: "kiemtradon.firebaseapp.com",
@@ -412,9 +548,12 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
         const database = firebase.database();
         const masterDataRef = database.ref('du_lieu_goc');
 
+        // BIẾN TOÀN CỤC
         let tempJsonData = null;
+        let tempInventoryData = null;
+        let currentInventoryData = null;
 
-        // GIỮ NGUYÊN CÁC BIẾN
+        // KHAI BÁO CÁC PHẦN TỬ HTML
         const datasetSelector = document.getElementById('datasetSelector');
         const currentDatasetNameSpan = document.getElementById('currentDatasetName');
         const uploadMasterInput = document.getElementById('uploadMaster');
@@ -456,67 +595,58 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
         const customerOrderTableBody = document.getElementById('customerOrderTableBody');
         const exportCustomerOrderBtn = document.getElementById('exportCustomerOrderBtn');
 
-        // GIỮ NGUYÊN CÁC HÀM XỬ LÝ MODAL VÀ TAB
-        helpBtn.onclick = () => helpModal.classList.add('modal-show');
-        closeHelpModal.onclick = () => helpModal.classList.remove('modal-show');
-        closeHdModal.onclick = () => hdModal.classList.remove('modal-show');
-        
-        window.onclick = (event) => { 
-            if (event.target == helpModal) helpModal.classList.remove('modal-show');
-            if (event.target == hdModal) hdModal.classList.remove('modal-show');
-        };
+        // THÊM CÁC BIẾN CHO TỒN KHO
+        const uploadInventoryInput = document.getElementById('uploadInventory');
+        const inventoryMappingSection = document.getElementById('inventoryMappingSection');
+        const confirmInventoryMappingBtn = document.getElementById('confirmInventoryMappingBtn');
+        const cancelInventoryMappingBtn = document.getElementById('cancelInventoryMappingBtn');
+        const inventoryTableContainer = document.getElementById('inventoryTableContainer');
+        const inventoryTableBody = document.getElementById('inventoryTableBody');
+        const analyzeInventoryBtn = document.getElementById('analyzeInventoryBtn');
+        const exportDeliveryOrderBtn = document.getElementById('exportDeliveryOrderBtn');
+        const exportPurchaseOrderBtn = document.getElementById('exportPurchaseOrderBtn');
+        const inventoryAnalysisResults = document.getElementById('inventoryAnalysisResults');
+        const debugInfo = document.getElementById('debugInfo');
 
-        tabButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                const tabId = button.getAttribute('data-tab');
-                
-                tabButtons.forEach(btn => btn.classList.remove('active'));
-                tabContents.forEach(content => content.classList.remove('active'));
-                
-                button.classList.add('active');
-                document.getElementById(tabId).classList.add('active');
-            });
-        });
-
-        // Hàm này tự động nhận tab mới
-        resultTabButtonsContainer.addEventListener('click', (e) => {
-            if (e.target.classList.contains('tab-button')) {
-                const tabId = e.target.getAttribute('data-tab');
-                
-                resultTabButtonsContainer.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-                document.querySelectorAll('#resultContainer .tab-content').forEach(content => content.classList.remove('active'));
-                
-                e.target.classList.add('active');
-                document.getElementById(tabId).classList.add('active');
-            }
-        });
-
-        // ##### BẮT ĐẦU THAY ĐỔI #####
-        // HÀM TIỆN ÍCH ĐỌC SỐ ĐÃ SỬA
-        function parseVietnameseNumber(str) {
-            if (!str) return 0;
-            let cleanStr = String(str).trim();
+        // HÀM XỬ LÝ SỐ LIỆU CHUẨN XÁC
+        function parseNumber(str) {
+            if (!str && str !== 0) return 0;
+            if (str === null || str === undefined) return 0;
             
-            // 1. Kiểm tra dấu ngoặc () của kế toán
+            let cleanStr = String(str).trim();
+            if (cleanStr === '') return 0;
+            
             let isNegative = false;
             if (cleanStr.startsWith('(') && cleanStr.endsWith(')')) {
                 isNegative = true;
-                cleanStr = cleanStr.substring(1, cleanStr.length - 1); // Bỏ ngoặc
+                cleanStr = cleanStr.substring(1, cleanStr.length - 1).trim();
             }
             
-            // 2. Xóa tất cả dấu chấm và dấu phẩy (phân cách hàng nghìn)
-            // Dấu trừ (-) vẫn được giữ lại
-            cleanStr = cleanStr.replace(/[.,]/g, '');
+            cleanStr = cleanStr.replace(/,/g, '');
             
-            // 3. Chuyển đổi
+            const dotCount = (cleanStr.match(/\./g) || []).length;
+            if (dotCount > 1) {
+                const parts = cleanStr.split('.');
+                const decimalPart = parts.pop();
+                const integerPart = parts.join('');
+                cleanStr = integerPart + '.' + decimalPart;
+            }
+            
             let num = parseFloat(cleanStr);
             
             if (isNaN(num)) return 0;
             
-            // 4. Áp dụng dấu âm nếu có
             return isNegative ? -Math.abs(num) : num;
         }
-        // ##### KẾT THÚC THAY ĐỔI #####
+
+        function parseQuantity(str) {
+            const num = parseNumber(str);
+            return Math.round(num);
+        }
+
+        function parsePrice(str) {
+            return parseNumber(str);
+        }
 
         function normalizeProductCode(code) {
             if (!code) return '';
@@ -548,6 +678,7 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
 
         function getSelectedDatasetKey() { return datasetSelector.value; }
 
+        // HÀM QUẢN LÝ DỮ LIỆU FIREBASE
         function populateDatasetSelector() {
             masterDataRef.once('value', snapshot => {
                 const datasets = snapshot.val();
@@ -563,15 +694,10 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
             });
         }
         
-        datasetSelector.addEventListener('change', () => {
-            loadDataFromFirebase();
-            currentDatasetNameSpan.textContent = getSelectedDatasetKey() || '...';
-        });
-        
         function loadDataFromFirebase() {
             const datasetKey = getSelectedDatasetKey();
             dataTableBody.innerHTML = '';
-            const colspan = 9; // 9 cột
+            const colspan = 9;
             if (!datasetKey) {
                 dataTableBody.innerHTML = `<tr><td colspan="${colspan}">Vui lòng chọn một bảng dữ liệu để xem.</td></tr>`;
                 return;
@@ -589,51 +715,7 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
             });
         }
 
-        function setupMappingUI(headers, data, section, selects) {
-            tempJsonData = data;
-
-            Object.values(selects).forEach(sel => sel.innerHTML = '');
-
-            const noneOption = '<option value="">-- Bỏ qua --</option>';
-            headers.forEach(header => {
-                const option = `<option value="${header}">${header}</option>`;
-                Object.values(selects).forEach(sel => sel.innerHTML += option);
-            });
-            
-            // Thêm tùy chọn "Bỏ qua" cho TẤT CẢ các cột tùy chọn
-            if (selects.mapSTT) selects.mapSTT.innerHTML = noneOption + selects.mapSTT.innerHTML;
-            if (selects.mapDVT) selects.mapDVT.innerHTML = noneOption + selects.mapDVT.innerHTML;
-            if (selects.mapCK) selects.mapCK.innerHTML = noneOption + selects.mapCK.innerHTML;
-            if (selects.mapQuyCach) selects.mapQuyCach.innerHTML = noneOption + selects.mapQuyCach.innerHTML; 
-            if (selects.mapGiaXuatHD) selects.mapGiaXuatHD.innerHTML = noneOption + selects.mapGiaXuatHD.innerHTML;
-            
-            if (selects.mapOrderCK) selects.mapOrderCK.innerHTML = noneOption + selects.mapOrderCK.innerHTML;
-            if (selects.mapOrderSoLuong) selects.mapOrderSoLuong.innerHTML = noneOption + selects.mapOrderSoLuong.innerHTML;
-
-            section.classList.remove('hidden');
-        }
-
-
-        uploadMasterInput.addEventListener('change', (event) => {
-            const file = event.target.files[0];
-            if (!file) return;
-            document.getElementById('datasetNameInput').value = file.name.replace(/\.[^/.]+$/, "");
-            
-            processExcelFile(file, mappingSection, {
-                mapMaSP: document.getElementById('mapMaSP'),
-                mapTenSP: document.getElementById('mapTenSP'),
-                mapGia: document.getElementById('mapGia'), // Đây là Gía bán (Unit price)
-                mapSTT: document.getElementById('mapSTT'),
-                mapDVT: document.getElementById('mapDVT'),
-                mapCK: document.getElementById('mapCK'),
-                mapQuyCach: document.getElementById('mapQuyCach'),
-                mapGiaXuatHD: document.getElementById('mapGiaXuatHD')
-            });
-            
-            event.target.value = '';
-        });
-
-        // GIỮ NGUYÊN HÀM NÀY
+        // HÀM XỬ LÝ FILE EXCEL
         function processExcelFile(file, section, selects) {
             const reader = new FileReader();
             reader.onload = (event) => {
@@ -666,8 +748,8 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
                                 cellValue = String(cell.v);
                             }
                             
-                            row[header] = cellValue.trim();
-                            if (cellValue.trim() !== '') hasData = true;
+                            row[header] = cellValue;
+                            if (cellValue !== '' && cellValue !== null && cellValue !== undefined) hasData = true;
                         }
                         if (hasData) {
                             jsonData.push(row);
@@ -682,6 +764,576 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
             reader.readAsArrayBuffer(file);
         }
 
+        function setupMappingUI(headers, data, section, selects) {
+            if (section === inventoryMappingSection) {
+                tempInventoryData = data;
+            } else {
+                tempJsonData = data;
+            }
+
+            Object.values(selects).forEach(sel => sel.innerHTML = '');
+
+            const noneOption = '<option value="">-- Bỏ qua --</option>';
+            headers.forEach(header => {
+                const option = `<option value="${header}">${header}</option>`;
+                Object.values(selects).forEach(sel => sel.innerHTML += option);
+            });
+            
+            if (selects.mapSTT) selects.mapSTT.innerHTML = noneOption + selects.mapSTT.innerHTML;
+
+            if (selects.mapOrderCK) selects.mapOrderCK.innerHTML = noneOption + selects.mapOrderCK.innerHTML;
+
+            if (selects.mapInvSTT) selects.mapInvSTT.innerHTML = noneOption + selects.mapInvSTT.innerHTML;
+            if (selects.mapInvTenSP) selects.mapInvTenSP.innerHTML = noneOption + selects.mapInvTenSP.innerHTML;
+
+            section.classList.remove('hidden');
+        }
+
+        // HÀM TẠO HÀNG TRONG BẢNG - ĐÃ SỬA LỖI MÃ ERP
+        function createTableRow(item, isNew = false) {
+            const row = document.createElement('tr');
+            
+            const giaBanDisplay = item.gia_ban_display || (item.gia_ban != null ? formatNumber(item.gia_ban) : '');
+            const ckDisplay = item.ck_display || (item.chiet_khau != null ? item.chiet_khau + '%' : '');
+            const giaXuatHDDisplay = item.gia_xuat_hd_display || (item.gia_xuat_hd != null ? formatNumber(item.gia_xuat_hd) : '');
+
+            row.innerHTML = `
+                <td contenteditable="${isNew}">${item.stt||''}</td>
+                <td contenteditable="true">${item.ma_sp||''}</td>
+                <td contenteditable="true">${item.ma_erp||''}</td>
+                <td contenteditable="true">${item.ten_sp||''}</td>
+                <td contenteditable="true">${giaBanDisplay}</td> 
+                <td contenteditable="true">${ckDisplay}</td>
+                <td contenteditable="true">${giaXuatHDDisplay}</td> 
+                <td contenteditable="true">${item.quy_cach || '1'}</td> 
+                <td><button class="delete-btn">Xóa</button></td>
+            `;
+            row.querySelector('.delete-btn').addEventListener('click', () => row.remove());
+            return row;
+        }
+
+        // HÀM ĐỊNH DẠNG SỐ
+        function formatNumber(num) {
+            if (num === null || num === undefined) return '';
+            return new Intl.NumberFormat('en-US', { 
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0 
+            }).format(num);
+        }
+
+        // HÀM HIỂN THỊ KẾT QUẢ - ĐÃ THÊM MÃ ERP
+        function displayResults(correct, incorrect, salesOrderItems, customerOrderItems) {
+            resultContainer.classList.remove('hidden');
+            
+            resultsDiv.innerHTML = `<div class="result-section correct"><h3 style="color: var(--success-color);">✅ ĐÚNG (${correct.length})</h3><ul>${correct.length>0?correct.join(''):'<li>Không có.</li>'}</ul></div><div class="result-section incorrect"><h3 style="color: var(--error-color);">❌ SAI / KHÔNG TÌM THẤY (${incorrect.length})</h3><ul>${incorrect.length>0?incorrect.join(''):'<li>Không có.</li>'}</ul></div>`;
+
+            // CẬP NHẬT BẢNG ĐƠN HÀNG BÁN - THÊM MÃ ERP
+            salesOrderTableBody.innerHTML = '';
+            if (salesOrderItems && salesOrderItems.length > 0) {
+                salesOrderItems.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${item.stt}</td>
+                        <td>${item.ma_sp}</td>
+                        <td>${item.ma_erp}</td>
+                        <td>${item.ten_sp}</td>
+                        <td style="text-align: right;">${formatNumber(item.quy_cach_don_vi_mua)}</td>
+                        <td style="text-align: right;">${formatNumber(item.gia_ban_don_vi)}</td>
+                        <td style="text-align: right; font-weight: 600;">${formatNumber(item.tong_gia_tri)}</td>
+                        <td style="text-align: right;">${formatNumber(Math.round(item.thue_5))}</td>
+                    `;
+                    salesOrderTableBody.appendChild(row);
+                });
+            } else {
+                salesOrderTableBody.innerHTML = '<tr><td colspan="8" style="text-align: center;">Không có dữ liệu đơn hàng bán.</td></tr>';
+            }
+
+            // CẬP NHẬT BẢNG ĐƠN HÀNG KHÁCH HÀNG - THÊM MÃ ERP
+            customerOrderTableBody.innerHTML = '';
+            if (customerOrderItems && customerOrderItems.length > 0) {
+                customerOrderItems.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${item.stt}</td>
+                        <td>${item.ma_sp}</td>
+                        <td>${item.ma_erp}</td>
+                        <td>${item.ten_sp}</td>
+                        <td style="text-align: right;">${item.gia_ban_dh}</td>
+                        <td style="text-align: right;">${item.chiet_khau_dh}</td>
+                        <td style="text-align: right;">${formatNumber(item.so_luong_dh)}</td>
+                        <td style="text-align: right; font-weight: 600; color:var(--primary-color);">${formatNumber(item.gia_xuat_hd_goc)}</td>
+                        <td style="text-align: right; font-weight: 600; color:var(--error-color);">${formatNumber(item.tong_tien)}</td>
+                    `;
+                    customerOrderTableBody.appendChild(row);
+                });
+            } else {
+                customerOrderTableBody.innerHTML = '<tr><td colspan="9" style="text-align: center;">Không có dữ liệu đơn hàng.</td></tr>';
+            }
+
+            resultTabButtonsContainer.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('#resultContainer .tab-content').forEach(content => content.classList.remove('active'));
+  
+            resultTabButtonsContainer.querySelector('[data-tab="result-check-tab"]').classList.add('active');
+            document.getElementById('result-check-tab').classList.add('active');
+        }
+
+        // HÀM XỬ LÝ DÁN DỮ LIỆU
+        function parsePastedData(pastedText) {
+            try {
+                const lines = pastedText.trim().split('\n');
+                if (lines.length < 2) {
+                    throw new Error("Dữ liệu phải có ít nhất 2 dòng (tiêu đề và dữ liệu)");
+                }
+
+                const firstLine = lines[0];
+                const hasTabs = firstLine.includes('\t');
+                const separator = hasTabs ? '\t' : ',';
+                
+                const headers = firstLine.split(separator).map(header => header.trim());
+                
+                const jsonData = [];
+                for (let i = 1; i < lines.length; i++) {
+                    if (lines[i].trim() === '') continue;
+                    
+                    const cells = lines[i].split(separator);
+                    const row = {};
+                    
+                    headers.forEach((header, index) => {
+                        row[header] = cells[index] ? cells[index].trim() : '';
+                    });
+                    
+                    jsonData.push(row);
+                }
+
+                if (jsonData.length === 0) {
+                    throw new Error("Không có dữ liệu hợp lệ sau dòng tiêu đề");
+                }
+
+                return {
+                    headers: headers,
+                    data: jsonData
+                };
+            } catch (error) {
+                throw new Error("Lỗi khi xử lý dữ liệu dán: " + error.message);
+            }
+        }
+
+        // HÀM SO SÁNH TÊN SẢN PHẨM
+        function compareProductNames(name1, name2) {
+            if (!name1 || !name2) return false;
+            
+            const cleanName1 = String(name1).toLowerCase().trim().replace(/\s+/g, ' ');
+            const cleanName2 = String(name2).toLowerCase().trim().replace(/\s+/g, ' ');
+            
+            if (cleanName1 === cleanName2) return true;
+            
+            const minLength = 6;
+            
+            const getFirstChars = (str, count) => {
+                return str.replace(/\s/g, '').substring(0, count);
+            };
+            
+            const firstChars1 = getFirstChars(cleanName1, minLength);
+            const firstChars2 = getFirstChars(cleanName2, minLength);
+            
+            if (firstChars1.length < minLength || firstChars2.length < minLength) return false;
+            
+            return firstChars1 === firstChars2;
+        }
+
+        // HÀM TÌM SẢN PHẨM TRONG TỒN KHO THEO MÃ ERP
+        function findProductInInventoryByERP(maERP) {
+            if (!currentInventoryData || !maERP) return null;
+            
+            const normalizedERP = normalizeProductCode(maERP);
+            
+            return currentInventoryData.find(inv => {
+                if (!inv.ma_sp) return false;
+                const invCode = normalizeProductCode(inv.ma_sp);
+                return invCode === normalizedERP;
+            });
+        }
+
+        // HÀM HIỂN THỊ DỮ LIỆU TỒN KHO
+        function displayInventoryData(data) {
+            inventoryTableBody.innerHTML = '';
+            
+            if (data && data.length > 0) {
+                data.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${item.stt}</td>
+                        <td>${item.ma_sp}</td>
+                        <td>${item.ten_sp}</td>
+                        <td style="text-align: right;">${formatNumber(item.ton_cuoi)}</td>
+                    `;
+                    inventoryTableBody.appendChild(row);
+                });
+            } else {
+                inventoryTableBody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Không có dữ liệu tồn kho.</td></tr>';
+            }
+        }
+
+        // ========== HÀM PHÂN TÍCH TỒN KHO (ĐÃ SỬA HOÀN CHỈNH) ==========
+        function performInventoryAnalysis() {
+            console.log("=== BẮT ĐẦU PHÂN TÍCH TỒN KHO (THEO MÃ ERP) ===");
+            
+            const customerOrderRows = customerOrderTableBody.querySelectorAll('tr');
+            const deliveryOrderItems = [];
+            const purchaseOrderItems = [];
+            let matchedProducts = 0;
+            let unmatchedProducts = 0;
+
+            let debugHtml = "<strong>DEBUG THÔNG TIN PHÂN TÍCH:</strong><br>";
+            debugHtml += `Tổng số hàng trong đơn hàng: ${customerOrderRows.length}<br>`;
+            debugHtml += `Tổng số sản phẩm trong tồn kho: ${currentInventoryData ? currentInventoryData.length : 0}<br><br>`;
+
+            Array.from(customerOrderRows).forEach((row, index) => {
+                if (row.querySelector('td[colspan]')) {
+                    return;
+                }
+
+                const cells = row.querySelectorAll('td');
+                if (cells.length < 9) return;
+
+                const orderMaSP = cells[1].innerText.trim();
+                const orderMaERP = cells[2].innerText.trim();
+                const orderTenSP = cells[3].innerText.trim();
+                const orderSoLuongText = cells[6].innerText.trim();
+                const orderSoLuong = parseQuantity(orderSoLuongText) || 0;
+
+                debugHtml += `<strong>Hàng ${index + 1}:</strong> Mã ERP: "${orderMaERP}", Tên: "${orderTenSP}", Số lượng: ${orderSoLuong}<br>`;
+
+                if (orderSoLuong <= 0) {
+                    debugHtml += `→ Bỏ qua (số lượng = 0)<br><br>`;
+                    return;
+                }
+
+                // TÌM SẢN PHẨM TRONG TỒN KHO BẰNG MÃ ERP
+                const foundInventoryItem = findProductInInventoryByERP(orderMaERP);
+
+                if (foundInventoryItem) {
+                    matchedProducts++;
+                    const tonKho = parseQuantity(foundInventoryItem.ton_cuoi) || 0;
+                    
+                    debugHtml += `→ Tìm thấy trong tồn kho: Mã SP "${foundInventoryItem.ma_sp}"<br>`;
+                    debugHtml += `→ Tồn kho: ${tonKho}, Số lượng đặt: ${orderSoLuong}<br>`;
+
+                    // TÍNH TOÁN SỐ LƯỢNG TẠM GIAO VÀ CẦN ĐẶT THÊM
+                    const chenhLech = orderSoLuong - tonKho;
+                    
+                    if (chenhLech <= 0) {
+                        // ĐỦ TỒN KHO HOẶC THỪA - GIAO HẾT THEO ĐƠN HÀNG
+                        const soLuongGiao = orderSoLuong;
+                        deliveryOrderItems.push({
+                            stt: deliveryOrderItems.length + 1,
+                            ma_sp: foundInventoryItem.ma_sp,
+                            ma_erp: orderMaERP,
+                            ten_sp: orderTenSP,
+                            so_luong_dat: orderSoLuong,
+                            ton_kho: tonKho,
+                            so_luong_giao: soLuongGiao,
+                            chenh_lech: chenhLech,
+                            ghi_chu: chenhLech < 0 ? `Thừa ${Math.abs(chenhLech)} so với đơn hàng` : 'Đủ tồn kho'
+                        });
+                        debugHtml += `→ <strong style="color: green;">ĐỦ TỒN KHO → THÊM VÀO ĐƠN GIAO: ${soLuongGiao}</strong><br><br>`;
+                    } else {
+                        // THIẾU TỒN KHO - GIAO MỘT PHẦN VÀ ĐẶT THÊM PHẦN THIẾU
+                        const soLuongGiao = tonKho; // Giao hết số lượng tồn kho hiện có
+                        const soLuongDatThem = chenhLech; // Phần thiếu cần đặt thêm
+                        
+                        // Thêm vào đơn hàng giao (phần có thể giao ngay)
+                        deliveryOrderItems.push({
+                            stt: deliveryOrderItems.length + 1,
+                            ma_sp: foundInventoryItem.ma_sp,
+                            ma_erp: orderMaERP,
+                            ten_sp: orderTenSP,
+                            so_luong_dat: orderSoLuong,
+                            ton_kho: tonKho,
+                            so_luong_giao: soLuongGiao,
+                            chenh_lech: chenhLech,
+                            ghi_chu: `Giao tạm ${soLuongGiao}, cần đặt thêm ${soLuongDatThem}`
+                        });
+                        
+                        // Thêm vào đơn hàng cần đặt thêm (phần thiếu)
+                        purchaseOrderItems.push({
+                            stt: purchaseOrderItems.length + 1,
+                            ma_sp: foundInventoryItem.ma_sp,
+                            ma_erp: orderMaERP,
+                            ten_sp: orderTenSP,
+                            so_luong_dat: orderSoLuong,
+                            ton_kho: tonKho,
+                            so_luong_dat_them: soLuongDatThem,
+                            chenh_lech: chenhLech,
+                            ghi_chu: `Thiếu ${soLuongDatThem} so với đơn hàng`
+                        });
+                        
+                        debugHtml += `→ <strong style="color: orange;">THIẾU TỒN KHO → GIAO TẠM: ${soLuongGiao}, ĐẶT THÊM: ${soLuongDatThem}</strong><br><br>`;
+                    }
+                } else {
+                    unmatchedProducts++;
+                    // KHÔNG TÌM THẤY TRONG TỒN KHO - CẦN ĐẶT TOÀN BỘ
+                    purchaseOrderItems.push({
+                        stt: purchaseOrderItems.length + 1,
+                        ma_sp: orderMaSP,
+                        ma_erp: orderMaERP,
+                        ten_sp: orderTenSP,
+                        so_luong_dat: orderSoLuong,
+                        ton_kho: 0,
+                        so_luong_dat_them: orderSoLuong,
+                        chenh_lech: orderSoLuong,
+                        ghi_chu: "Không tìm thấy trong tồn kho - Đặt toàn bộ"
+                    });
+                    debugHtml += `→ <strong style="color: red;">KHÔNG TÌM THẤY → ĐẶT TOÀN BỘ: ${orderSoLuong}</strong><br><br>`;
+                }
+            });
+
+            debugHtml += `<strong>KẾT QUẢ TỔNG QUAN:</strong><br>`;
+            debugHtml += `- Tổng sản phẩm đơn hàng: ${matchedProducts + unmatchedProducts}<br>`;
+            debugHtml += `- Sản phẩm khớp với tồn kho: ${matchedProducts}<br>`;
+            debugHtml += `- Sản phẩm không tìm thấy: ${unmatchedProducts}<br>`;
+            debugHtml += `- Đơn hàng giao: ${deliveryOrderItems.length} sản phẩm<br>`;
+            debugHtml += `- Cần đặt thêm: ${purchaseOrderItems.length} sản phẩm<br>`;
+
+            debugInfo.innerHTML = debugHtml;
+            debugInfo.style.display = 'block';
+
+            console.log("KẾT QUẢ PHÂN TÍCH:", {
+                deliveryItems: deliveryOrderItems,
+                purchaseItems: purchaseOrderItems,
+                matched: matchedProducts,
+                unmatched: unmatchedProducts
+            });
+
+            displayInventoryAnalysis(deliveryOrderItems, purchaseOrderItems, matchedProducts, unmatchedProducts);
+            
+            setTimeout(() => {
+                alert(`✅ Phân tích hoàn tất!\n\n📊 Kết quả:\n- Đơn hàng tạm giao: ${deliveryOrderItems.length} sản phẩm\n- Cần đặt thêm: ${purchaseOrderItems.length} sản phẩm\n- Tỷ lệ khớp: ${matchedProducts}/${matchedProducts + unmatchedProducts} sản phẩm`);
+            }, 500);
+        }
+
+        // HÀM HIỂN THỊ KẾT QUẢ PHÂN TÍCH TỒN KHO (ĐÃ SỬA HOÀN CHỈNH)
+        function displayInventoryAnalysis(deliveryItems, purchaseItems, matchedCount, unmatchedCount) {
+            const deliveryOrderTableBody = document.getElementById('deliveryOrderTableBody');
+            const purchaseOrderTableBody = document.getElementById('purchaseOrderTableBody');
+            
+            console.log("=== HIỂN THỊ KẾT QUẢ PHÂN TÍCH ===");
+            console.log("Số lượng đơn giao:", deliveryItems.length);
+            console.log("Số lượng đơn đặt thêm:", purchaseItems.length);
+            console.log("Dữ liệu đơn đặt thêm:", purchaseItems);
+            
+            // Tính tổng số lượng
+            const totalDelivery = deliveryItems.reduce((sum, item) => sum + (item.so_luong_giao || 0), 0);
+            const totalPurchase = purchaseItems.reduce((sum, item) => sum + (item.so_luong_dat_them || 0), 0);
+            
+            inventoryAnalysisResults.innerHTML = `
+                <div class="match-info">
+                    <strong>📊 THỐNG KÊ PHÂN TÍCH:</strong><br>
+                    - Tổng sản phẩm đơn hàng: ${matchedCount + unmatchedCount}<br>
+                    - Sản phẩm khớp với tồn kho: ${matchedCount}<br>
+                    - Sản phẩm không tìm thấy: ${unmatchedCount}<br>
+                    - <strong style="color: green;">Đơn hàng tạm giao: ${deliveryItems.length} sản phẩm (${totalDelivery} đơn vị)</strong><br>
+                    - <strong style="color: red;">Cần đặt thêm: ${purchaseItems.length} sản phẩm (${totalPurchase} đơn vị)</strong>
+                </div>
+            `;
+            
+            // HIỂN THỊ BẢNG ĐƠN HÀNG TẠM GIAO
+            deliveryOrderTableBody.innerHTML = '';
+            if (deliveryItems.length > 0) {
+                deliveryItems.forEach((item, index) => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${item.stt}</td>
+                        <td>${item.ma_sp}</td>
+                        <td>${item.ma_erp}</td>
+                        <td>${item.ten_sp}</td>
+                        <td style="text-align: right;">${formatNumber(item.so_luong_dat)}</td>
+                        <td style="text-align: right;">${formatNumber(item.ton_kho)}</td>
+                        <td style="text-align: right; font-weight: 600; color: var(--success-color);">${formatNumber(item.so_luong_giao)}</td>
+                        <td style="font-size: 12px; color: #666;">${item.ghi_chu || ''}</td>
+                    `;
+                    deliveryOrderTableBody.appendChild(row);
+                });
+            } else {
+                deliveryOrderTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="8" style="text-align: center; color: #666; padding: 20px;">
+                            <div style="font-size: 16px; margin-bottom: 8px;">📦</div>
+                            <div>Không có sản phẩm nào đủ tồn kho để giao ngay</div>
+                        </td>
+                    </tr>
+                `;
+            }
+            
+            // HIỂN THỊ BẢNG ĐƠN CẦN ĐẶT THÊM - SỬA LỖI QUAN TRỌNG
+            purchaseOrderTableBody.innerHTML = '';
+            console.log("Bắt đầu hiển thị đơn đặt thêm, số lượng:", purchaseItems.length);
+            
+            if (purchaseItems.length > 0) {
+                purchaseItems.forEach((item, index) => {
+                    console.log("Hiển thị item:", item);
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${item.stt}</td>
+                        <td>${item.ma_sp}</td>
+                        <td>${item.ma_erp}</td>
+                        <td>${item.ten_sp}</td>
+                        <td style="text-align: right;">${formatNumber(item.so_luong_dat)}</td>
+                        <td style="text-align: right;">${formatNumber(item.ton_kho)}</td>
+                        <td style="text-align: right; font-weight: 600; color: var(--error-color);">${formatNumber(item.so_luong_dat_them)}</td>
+                        <td style="font-size: 12px; color: #666;">${item.ghi_chu || ''}</td>
+                    `;
+                    purchaseOrderTableBody.appendChild(row);
+                });
+                console.log("Đã hiển thị xong", purchaseItems.length, "sản phẩm trong đơn đặt thêm");
+            } else {
+                purchaseOrderTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="8" style="text-align: center; color: #666; padding: 20px;">
+                            <div style="font-size: 16px; margin-bottom: 8px;">🛒</div>
+                            <div>Không có sản phẩm nào cần đặt thêm từ nhà cung cấp</div>
+                        </td>
+                    </tr>
+                `;
+                console.log("Không có dữ liệu đơn đặt thêm để hiển thị");
+            }
+
+            // ĐẢM BẢO CÁC TAB PHÂN TÍCH ĐƯỢC KÍCH HOẠT
+            activateInventoryTabs();
+        }
+
+        // HÀM KÍCH HOẠT TAB PHÂN TÍCH TỒN KHO
+        function activateInventoryTabs() {
+            // Kích hoạt tab phân tích tồn kho chính
+            const inventoryTabBtn = resultTabButtonsContainer.querySelector('[data-tab="result-inventory-tab"]');
+            const inventoryTabContent = document.getElementById('result-inventory-tab');
+            
+            if (inventoryTabBtn && inventoryTabContent) {
+                resultTabButtonsContainer.querySelectorAll('.tab-button').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                
+                document.querySelectorAll('#resultContainer .tab-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                
+                inventoryTabBtn.classList.add('active');
+                inventoryTabContent.classList.add('active');
+            }
+            
+            // Kích hoạt tab đơn hàng tạm giao mặc định
+            const deliveryTabBtn = document.querySelector('[data-tab="delivery-order-tab"]');
+            const deliveryTabContent = document.getElementById('delivery-order-tab');
+            
+            if (deliveryTabBtn && deliveryTabContent) {
+                document.querySelectorAll('#result-inventory-tab .tab-button').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                document.querySelectorAll('#result-inventory-tab .tab-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                
+                deliveryTabBtn.classList.add('active');
+                deliveryTabContent.classList.add('active');
+            }
+        }
+
+        // SỰ KIỆN CHO MODAL VÀ TAB
+        helpBtn.onclick = () => helpModal.classList.add('modal-show');
+        closeHelpModal.onclick = () => helpModal.classList.remove('modal-show');
+        closeHdModal.onclick = () => hdModal.classList.remove('modal-show');
+        
+        window.onclick = (event) => { 
+            if (event.target == helpModal) helpModal.classList.remove('modal-show');
+            if (event.target == hdModal) hdModal.classList.remove('modal-show');
+        };
+
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const tabId = button.getAttribute('data-tab');
+                
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                tabContents.forEach(content => content.classList.remove('active'));
+                
+                button.classList.add('active');
+                document.getElementById(tabId).classList.add('active');
+            });
+        });
+
+        resultTabButtonsContainer.addEventListener('click', (e) => {
+            if (e.target.classList.contains('tab-button')) {
+                const tabId = e.target.getAttribute('data-tab');
+                
+                resultTabButtonsContainer.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+                document.querySelectorAll('#resultContainer .tab-content').forEach(content => content.classList.remove('active'));
+                
+                e.target.classList.add('active');
+                document.getElementById(tabId).classList.add('active');
+            }
+        });
+
+        // SỰ KIỆN CHO CÁC TAB PHÂN TÍCH TỒN KHO - ĐÃ SỬA LỖI
+        document.addEventListener('DOMContentLoaded', function() {
+            const inventoryTabButtons = document.querySelector('#result-inventory-tab .tab-buttons');
+            console.log("Khởi tạo sự kiện tab phân tích tồn kho, tồn tại:", !!inventoryTabButtons);
+            
+            if (inventoryTabButtons) {
+                inventoryTabButtons.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('tab-button')) {
+                        const tabId = e.target.getAttribute('data-tab');
+                        
+                        console.log("Click tab phân tích:", tabId);
+                        
+                        // Xóa active từ tất cả các tab button trong phân tích tồn kho
+                        document.querySelectorAll('#result-inventory-tab .tab-button').forEach(btn => {
+                            btn.classList.remove('active');
+                        });
+                        
+                        // Ẩn tất cả các tab content trong phân tích tồn kho
+                        document.querySelectorAll('#result-inventory-tab .tab-content').forEach(content => {
+                            content.classList.remove('active');
+                        });
+                        
+                        // Thêm active cho tab được click
+                        e.target.classList.add('active');
+                        
+                        // Hiển thị tab content tương ứng
+                        const targetTab = document.getElementById(tabId);
+                        if (targetTab) {
+                            targetTab.classList.add('active');
+                            console.log("Đã hiển thị tab:", tabId);
+                            
+                            // DEBUG: Kiểm tra nội dung tab
+                            if (tabId === 'purchase-order-tab') {
+                                const rows = document.querySelectorAll('#purchaseOrderTableBody tr');
+                                console.log("Số hàng trong tab đặt NCC:", rows.length);
+                            }
+                        }
+                    }
+                });
+            }
+        });
+
+        // SỰ KIỆN CHO DỮ LIỆU CHÍNH - ĐÃ SỬA LỖI MÃ ERP
+        uploadMasterInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+            document.getElementById('datasetNameInput').value = file.name.replace(/\.[^/.]+$/, "");
+            
+            processExcelFile(file, mappingSection, {
+                mapSTT: document.getElementById('mapSTT'),
+                mapMaSP: document.getElementById('mapMaSP'),
+                mapMaERP: document.getElementById('mapMaERP'),
+                mapTenSP: document.getElementById('mapTenSP'),
+                mapGia: document.getElementById('mapGia'),
+                mapCK: document.getElementById('mapCK'),
+                mapGiaXuatHD: document.getElementById('mapGiaXuatHD'),
+                mapQuyCach: document.getElementById('mapQuyCach')
+            });
+            
+            event.target.value = '';
+        });
+
         cancelMappingBtn.addEventListener('click', () => {
             mappingSection.classList.add('hidden');
             tempJsonData = null;
@@ -690,42 +1342,45 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
         confirmMappingBtn.addEventListener('click', () => {
             try {
                 const mapping = {
+                    stt: document.getElementById('mapSTT').value,
                     ma_sp: document.getElementById('mapMaSP').value,
+                    ma_erp: document.getElementById('mapMaERP').value,
                     ten_sp: document.getElementById('mapTenSP').value,
                     gia_ban: document.getElementById('mapGia').value,
-                    stt: document.getElementById('mapSTT').value,
-                    dvt: document.getElementById('mapDVT').value,
                     chiet_khau: document.getElementById('mapCK').value,
-                    quy_cach: document.getElementById('mapQuyCach').value, 
                     gia_xuat_hd: document.getElementById('mapGiaXuatHD').value,
+                    quy_cach: document.getElementById('mapQuyCach').value,
                     datasetName: document.getElementById('datasetNameInput').value.trim()
                 };
 
-                if (!mapping.ma_sp || !mapping.ten_sp || !mapping.gia_ban || !mapping.datasetName) throw new Error("Vui lòng điền đầy đủ các trường bắt buộc (*).");
+                if (!mapping.stt || !mapping.ma_sp || !mapping.ma_erp || !mapping.ten_sp || !mapping.gia_ban || !mapping.chiet_khau || !mapping.gia_xuat_hd || !mapping.quy_cach || !mapping.datasetName) {
+                    throw new Error("Vui lòng điền đầy đủ các trường bắt buộc (*).");
+                }
                 if (!tempJsonData) throw new Error("Không có dữ liệu file tạm thời. Vui lòng thử lại.");
 
                 const dataToSave = tempJsonData.map((row, index) => {
                     const giaBanValue = row[mapping.gia_ban];
-                    // Dùng hàm parseVietnameseNumber đã sửa
-                    let giaBanNumber = parseVietnameseNumber(giaBanValue);
+                    let giaBanNumber = parsePrice(giaBanValue);
                     
-                    const ckValue = (mapping.chiet_khau ? row[mapping.chiet_khau] : '') || '';
-                    const giaXuatHDValue = (mapping.gia_xuat_hd ? row[mapping.gia_xuat_hd] : '') || ''; 
+                    const ckValue = row[mapping.chiet_khau] || '';
+                    const giaXuatHDValue = row[mapping.gia_xuat_hd] || '';
 
                     return {
-                        stt: (mapping.stt ? row[mapping.stt] : (index + 1)) || (index + 1),
+                        stt: row[mapping.stt] || (index + 1),
                         ma_sp: row[mapping.ma_sp] || '',
+                        ma_erp: row[mapping.ma_erp] || '',
                         ten_sp: row[mapping.ten_sp] || '',
-                        dvt: (mapping.dvt ? row[mapping.dvt] : '') || '',
                         gia_ban: giaBanNumber,
                         gia_ban_display: giaBanValue,
                         chiet_khau: getCKValue(row, mapping.chiet_khau),
                         ck_display: ckValue,
-                        gia_xuat_hd: parseVietnameseNumber(giaXuatHDValue), // Dùng hàm đã sửa
+                        gia_xuat_hd: parsePrice(giaXuatHDValue),
                         gia_xuat_hd_display: giaXuatHDValue,
-                        quy_cach: (mapping.quy_cach ? parseInt(row[mapping.quy_cach].replace(/[.,]/g, '')) : 1) || 1
+                        quy_cach: parseQuantity(row[mapping.quy_cach]) || 1
                     };
                 });
+
+                console.log("Dữ liệu sẽ lưu:", dataToSave);
 
                 masterDataRef.child(mapping.datasetName).set(dataToSave).then(() => {
                     alert(`Đã lưu thành công bảng dữ liệu "${mapping.datasetName}"!`);
@@ -738,7 +1393,7 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
             } catch(error) { alert("Đã có lỗi xảy ra: " + error.message); }
         });
 
-        // GIỮ NGUYÊN TOÀN BỘ PHẦN XỬ LÝ ĐƠN HÀNG (Tải lên, Dán, Ánh xạ)
+        // SỰ KIỆN CHO ĐƠN HÀNG
         uploadOrderInput.addEventListener('change', (event) => {
             const file = event.target.files[0];
             if (!file) return;
@@ -784,52 +1439,11 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
             }
         });
 
-        function parsePastedData(pastedText) {
-            try {
-                const lines = pastedText.trim().split('\n');
-                if (lines.length < 2) {
-                    throw new Error("Dữ liệu phải có ít nhất 2 dòng (tiêu đề và dữ liệu)");
-                }
-
-                const firstLine = lines[0];
-                const hasTabs = firstLine.includes('\t');
-                const separator = hasTabs ? '\t' : ',';
-                
-                const headers = firstLine.split(separator).map(header => header.trim());
-                
-                const jsonData = [];
-                for (let i = 1; i < lines.length; i++) {
-                    if (lines[i].trim() === '') continue;
-                    
-                    const cells = lines[i].split(separator);
-                    const row = {};
-                    
-                    headers.forEach((header, index) => {
-                        row[header] = cells[index] ? cells[index].trim() : '';
-                    });
-                    
-                    jsonData.push(row);
-                }
-
-                if (jsonData.length === 0) {
-                    throw new Error("Không có dữ liệu hợp lệ sau dòng tiêu đề");
-                }
-
-                return {
-                    headers: headers,
-                    data: jsonData
-                };
-            } catch (error) {
-                throw new Error("Lỗi khi xử lý dữ liệu dán: " + error.message);
-            }
-        }
-
         cancelOrderMappingBtn.addEventListener('click', () => {
             mappingOrderSection.classList.add('hidden');
             tempJsonData = null;
         });
 
-        // HÀM KIỂM TRA ĐƠN HÀNG
         confirmOrderMappingBtn.addEventListener('click', () => {
             try {
                 const mapping = {
@@ -844,6 +1458,12 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
 
                 if (!mapping.ma_sp || !mapping.ten_sp || !mapping.gia_xuat) throw new Error("Vui lòng ánh xạ đầy đủ các cột bắt buộc (*).");
                 if (!tempJsonData) throw new Error("Không có dữ liệu file tạm thời. Vui lòng thử lại.");
+
+                if (!mapping.so_luong) {
+                    if (!confirm("⚠️ Bạn chưa ánh xạ cột Số lượng. Phân tích tồn kho sẽ không hoạt động nếu không có số lượng. Bạn có muốn tiếp tục không?")) {
+                        return;
+                    }
+                }
 
                 const datasetKey = getSelectedDatasetKey();
                 masterDataRef.child(datasetKey).once('value', snapshot => {
@@ -860,42 +1480,45 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
 
                     const correctItems = [], incorrectItems = [];
                     const salesOrderData = [];
-                    const customerOrderData = []; 
+                    const customerOrderData = [];
 
-                    tempJsonData.forEach(orderItem => {
+                    tempJsonData.forEach((orderItem, index) => {
                         const orderMaSP = String(orderItem[mapping.ma_sp] || '').trim();
                         if (!orderMaSP) return;
                         
                         const orderGiaValue = orderItem[mapping.gia_xuat];
-                        const orderGiaXuat = parseVietnameseNumber(orderGiaValue); // Dùng hàm đã sửa
+                        const orderGiaXuat = parsePrice(orderGiaValue);
                         const orderChietKhau = getCKValue(orderItem, mapping.chiet_khau); 
-                        const orderSoLuong = (mapping.so_luong ? parseVietnameseNumber(orderItem[mapping.so_luong]) : 0) || 0; // Dùng hàm đã sửa
+                        
+                        let orderSoLuong = 0;
+                        if (mapping.so_luong) {
+                            orderSoLuong = parseQuantity(orderItem[mapping.so_luong]) || 0;
+                        } else {
+                            orderSoLuong = 1;
+                        }
                         
                         const normalizedOrderCode = normalizeProductCode(orderMaSP);
                         
                         if (masterDataMap.has(normalizedOrderCode)) {
                             const masterItem = masterDataMap.get(normalizedOrderCode);
                             
-                            // Logic cho TAB 1: KẾT QUẢ SO GIÁ
                             let masterGia, masterGiaDisplay;
                             if (compareColumn === 'gia_xuat_hd') {
-                                masterGia = parseVietnameseNumber(masterItem.gia_xuat_hd); // Dùng hàm đã sửa
-                                masterGiaDisplay = masterItem.gia_xuat_hd_display || masterGia.toLocaleString('en-US');
-                            } else { // Mặc định là 'gia_ban'
-                                masterGia = parseVietnameseNumber(masterItem.gia_ban); // Dùng hàm đã sửa
-                                masterGiaDisplay = masterItem.gia_ban_display || masterGia.toLocaleString('en-US');
+                                masterGia = parsePrice(masterItem.gia_xuat_hd);
+                                masterGiaDisplay = masterItem.gia_xuat_hd_display || formatNumber(masterGia);
+                            } else {
+                                masterGia = parsePrice(masterItem.gia_ban);
+                                masterGiaDisplay = masterItem.gia_ban_display || formatNumber(masterGia);
                             }
-                            const masterCK = parseVietnameseNumber(masterItem.chiet_khau); // Dùng hàm đã sửa
-                            const masterTenSP = masterItem.ten_sp; 
+                            const masterCK = parsePrice(masterItem.chiet_khau);
+                            const masterTenSP = masterItem.ten_sp;
+                            const masterMaERP = masterItem.ma_erp || '';
 
-                            // Logic tính TAB 2: ĐƠN HÀNG BÁN (ĐÃ SỬA THEO YÊU CẦU)
                             if (orderSoLuong > 0) {
-                                const gia_goc = parseVietnameseNumber(masterItem.gia_ban) || 0; // Dùng hàm đã sửa
-                                const quy_cach = parseInt(masterItem.quy_cach) || 1;
+                                const gia_goc = parsePrice(masterItem.gia_ban) || 0;
+                                const quy_cach = parseQuantity(masterItem.quy_cach) || 1;
                                 
-                                // YÊU CẦU MỚI: Giá bán đơn vị = Giá gốc / Quy cách
                                 let gia_ban_don_vi = (gia_goc / quy_cach);
-                                
                                 const gia_ban_don_vi_lam_tron = Math.round(gia_ban_don_vi);
 
                                 const quyCachDonViMua = orderSoLuong * quy_cach;
@@ -905,6 +1528,7 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
                                 salesOrderData.push({
                                     stt: salesOrderData.length + 1,
                                     ma_sp: masterItem.ma_sp,
+                                    ma_erp: masterMaERP,
                                     ten_sp: masterItem.ten_sp,
                                     quy_cach_don_vi_mua: quyCachDonViMua,
                                     gia_ban_don_vi: gia_ban_don_vi_lam_tron,
@@ -913,22 +1537,21 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
                                 });
                             }
 
-                            // Logic tính TAB 3: ĐƠN HÀNG KHÁCH HÀNG (ĐÃ THAY ĐỔI)
-                            const masterGiaXuatHD = parseVietnameseNumber(masterItem.gia_xuat_hd) || 0; // Dùng hàm đã sửa
+                            const masterGiaXuatHD = parsePrice(masterItem.gia_xuat_hd) || 0;
                             const tongTienGoc = masterGiaXuatHD * orderSoLuong;
                             
                             customerOrderData.push({
                                 stt: customerOrderData.length + 1,
                                 ma_sp: orderMaSP,
+                                ma_erp: masterMaERP,
                                 ten_sp: masterTenSP,
-                                gia_ban_dh: masterItem.gia_ban_display || parseVietnameseNumber(masterItem.gia_ban).toLocaleString('en-US'), // Dùng hàm đã sửa
+                                gia_ban_dh: masterItem.gia_ban_display || formatNumber(parsePrice(masterItem.gia_ban)),
                                 chiet_khau_dh: masterItem.ck_display || (masterItem.chiet_khau ? masterItem.chiet_khau + '%' : '0%'),
                                 so_luong_dh: orderSoLuong,
                                 gia_xuat_hd_goc: masterGiaXuatHD,
                                 tong_tien: tongTienGoc
                             });
 
-                            // Logic so sánh cho TAB 1
                             const giaKhop = Math.abs(orderGiaXuat - masterGia) < 0.001;
                             const ckKhop = !mapping.chiet_khau || (Math.abs(orderChietKhau - masterCK) < 0.001);
 
@@ -941,7 +1564,7 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
                                 let errorMsg = `<li><b>${orderMaSP} - ${masterTenSP}</b>: `;
                                 if (!giaKhop) {
                                     const chenhLech = orderGiaXuat - masterGia;
-                                    errorMsg += `<span style="font-weight:bold; color:var(--error-color);">SAI GIÁ</span>. ĐH: ${orderGiaValue}, Gốc: ${masterGiaDisplay}. (Lệch: ${chenhLech.toLocaleString('en-US')} đ)`;
+                                    errorMsg += `<span style="font-weight:bold; color:var(--error-color);">SAI GIÁ</span>. ĐH: ${orderGiaValue}, Gốc: ${masterGiaDisplay}. (Lệch: ${formatNumber(chenhLech)} đ)`;
                                 }
                                 if (!ckKhop) {
                                     if (!giaKhop) errorMsg += " / ";
@@ -967,12 +1590,104 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
                         }
                     });
                     
+                    if (customerOrderData.length === 0) {
+                        alert("⚠️ Cảnh báo: Không có dữ liệu đơn hàng khách hàng. Phân tích tồn kho sẽ không hoạt động.");
+                    }
+                    
                     displayResults(correctItems, incorrectItems, salesOrderData, customerOrderData);
                     cancelOrderMappingBtn.click();
                 });
             } catch (error) { alert("Đã có lỗi xảy ra: " + error.message); }
         });
-        
+
+        // SỰ KIỆN CHO TỒN KHO
+        uploadInventoryInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            processExcelFile(file, inventoryMappingSection, {
+                mapInvSTT: document.getElementById('mapInvSTT'),
+                mapInvMaSP: document.getElementById('mapInvMaSP'),
+                mapInvTenSP: document.getElementById('mapInvTenSP'),
+                mapInvTonCuoi: document.getElementById('mapInvTonCuoi')
+            });
+            
+            event.target.value = '';
+        });
+
+        confirmInventoryMappingBtn.addEventListener('click', () => {
+            try {
+                const mapping = {
+                    stt: document.getElementById('mapInvSTT').value,
+                    ma_sp: document.getElementById('mapInvMaSP').value,
+                    ten_sp: document.getElementById('mapInvTenSP').value,
+                    ton_cuoi: document.getElementById('mapInvTonCuoi').value
+                };
+
+                if (!mapping.ma_sp || !mapping.ton_cuoi) {
+                    throw new Error("Vui lòng ánh xạ đầy đủ các cột bắt buộc (*) cho file tồn kho (Mã SP và Tồn cuối kỳ).");
+                }
+                if (!tempInventoryData) {
+                    throw new Error("Không có dữ liệu file tồn kho tạm thời. Vui lòng thử lại.");
+                }
+
+                currentInventoryData = tempInventoryData.map((row, index) => {
+                    const tonCuoiValue = row[mapping.ton_cuoi];
+                    let tonCuoiNumber = parseQuantity(tonCuoiValue);
+                    
+                    return {
+                        stt: (mapping.stt ? row[mapping.stt] : (index + 1)) || (index + 1),
+                        ma_sp: String(row[mapping.ma_sp] || '').trim(),
+                        ten_sp: String(row[mapping.ten_sp] || '').trim(),
+                        ton_cuoi: tonCuoiNumber
+                    };
+                });
+
+                console.log("Dữ liệu tồn kho đã xử lý:", currentInventoryData);
+                displayInventoryData(currentInventoryData);
+                inventoryMappingSection.classList.add('hidden');
+                inventoryTableContainer.classList.remove('hidden');
+                
+                alert("Đã tải dữ liệu tồn kho thành công! Bấm 'Phân Tích Tồn Kho' để so sánh với đơn hàng.");
+                
+            } catch(error) {
+                alert("Đã có lỗi xảy ra: " + error.message);
+            }
+        });
+
+        cancelInventoryMappingBtn.addEventListener('click', () => {
+            inventoryMappingSection.classList.add('hidden');
+            tempInventoryData = null;
+        });
+
+        // SỰ KIỆN CHO NÚT PHÂN TÍCH TỒN KHO
+        analyzeInventoryBtn.addEventListener('click', () => {
+            console.log("=== BẮT ĐẦU PHÂN TÍCH TỒN KHO ===");
+            
+            if (!currentInventoryData) {
+                alert("Vui lòng tải lên và xác nhận dữ liệu tồn kho trước!");
+                return;
+            }
+            
+            const customerOrderRows = customerOrderTableBody.querySelectorAll('tr');
+            const hasRealData = Array.from(customerOrderRows).some(row => 
+                !row.querySelector('td[colspan]') && row.querySelectorAll('td').length >= 9
+            );
+            
+            if (!hasRealData) {
+                alert("Không có dữ liệu đơn hàng khách hàng để phân tích! Vui lòng kiểm tra đơn hàng trước.");
+                return;
+            }
+
+            console.log("Dữ liệu tồn kho:", currentInventoryData);
+            console.log("Số lượng đơn hàng:", customerOrderRows.length);
+
+            resultContainer.classList.remove('hidden');
+            
+            performInventoryAnalysis();
+        });
+
+        // SỰ KIỆN CHO CÁC NÚT CHỨC NĂNG - ĐÃ SỬA LỖI MÃ ERP
         clearDataBtn.addEventListener('click', () => {
             const datasetKey = getSelectedDatasetKey();
             if (!datasetKey) { alert("Vui lòng chọn một bảng dữ liệu để xóa."); return; }
@@ -985,54 +1700,47 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
             }
         });
 
-        // HÀM TẠO HÀNG (Chuẩn '12,000')
-        function createTableRow(item, isNew = false) {
-            const row = document.createElement('tr');
-            
-            const giaBanDisplay = item.gia_ban_display || (item.gia_ban != null ? new Intl.NumberFormat('en-US', { maximumFractionDigits: 0, minimumFractionDigits: 0 }).format(item.gia_ban) : '');
-            const ckDisplay = item.ck_display || (item.chiet_khau != null ? item.chiet_khau + '%' : '');
-            const giaXuatHDDisplay = item.gia_xuat_hd_display || (item.gia_xuat_hd != null ? new Intl.NumberFormat('en-US', { maximumFractionDigits: 0, minimumFractionDigits: 0 }).format(item.gia_xuat_hd) : '');
-
-
-            row.innerHTML = `
-                <td contenteditable="${isNew}">${item.stt||''}</td>
-                <td contenteditable="true">${item.ma_sp||''}</td>
-                <td contenteditable="true">${item.ten_sp||''}</td>
-                <td contenteditable="true">${item.dvt||''}</td>
-                <td contenteditable="true">${giaBanDisplay}</td> <td contenteditable="true">${ckDisplay}</td>
-                <td contenteditable="true">${giaXuatHDDisplay}</td> <td contenteditable="true">${item.quy_cach || '1'}</td> <td><button class="delete-btn">Xóa</button></td>
-            `;
-            row.querySelector('.delete-btn').addEventListener('click', () => row.remove());
-            return row;
-        }
-
-        // HÀM LƯU BẢNG GỐC
         saveToFirebaseBtn.addEventListener('click', () => {
             const datasetKey = getSelectedDatasetKey();
-            if (!datasetKey) { alert("Vui lòng chọn một bảng dữ liệu để lưu."); return; }
+            if (!datasetKey) { 
+                alert("Vui lòng chọn một bảng dữ liệu để lưu."); 
+                return; 
+            }
             
             const rows = dataTableBody.querySelectorAll('tr');
             const dataToSave = Array.from(rows).map(row => {
                 const cells = row.querySelectorAll('td');
+                
+                if (cells.length < 9 || row.querySelector('td[colspan]')) {
+                    return null;
+                }
+                
                 const ckText = cells[5].innerText.trim();
                 return {
                     stt: cells[0].innerText.trim(), 
                     ma_sp: cells[1].innerText.trim(), 
-                    ten_sp: cells[2].innerText.trim(),
-                    dvt: cells[3].innerText.trim(), 
-                    gia_ban: parseVietnameseNumber(cells[4].innerText) || 0, // Dùng hàm đã sửa
+                    ma_erp: cells[2].innerText.trim(),
+                    ten_sp: cells[3].innerText.trim(),
+                    gia_ban: parsePrice(cells[4].innerText) || 0,
                     gia_ban_display: cells[4].innerText.trim(),
-                    chiet_khau: parseVietnameseNumber(ckText.replace('%', '')) || 0, // Dùng hàm đã sửa
+                    chiet_khau: parsePrice(ckText.replace('%', '')) || 0,
                     ck_display: ckText,
-                    gia_xuat_hd: parseVietnameseNumber(cells[6].innerText) || 0, // Dùng hàm đã sửa
+                    gia_xuat_hd: parsePrice(cells[6].innerText) || 0,
                     gia_xuat_hd_display: cells[6].innerText.trim(),
-                    quy_cach: parseInt(cells[7].innerText.replace(/[.,]/g, '')) || 1
+                    quy_cach: parseQuantity(cells[7].innerText) || 1
                 };
-            });
-            masterDataRef.child(datasetKey).set(dataToSave).then(() => alert(`Lưu thay đổi cho bảng "${datasetKey}" thành công!`));
+            }).filter(item => item !== null);
+            
+            if (dataToSave.length === 0) {
+                alert("Không có dữ liệu để lưu!");
+                return;
+            }
+            
+            masterDataRef.child(datasetKey).set(dataToSave)
+                .then(() => alert(`Lưu thay đổi cho bảng "${datasetKey}" thành công!`))
+                .catch(error => alert("Lỗi khi lưu: " + error.message));
         });
         
-        // HÀM XUẤT HD (POPUP) (Chuẩn '12,000')
         exportHDBtn.addEventListener('click', () => {
             const datasetKey = getSelectedDatasetKey();
             if (!datasetKey) { alert("Vui lòng chọn bảng dữ liệu để xuất HD."); return; }
@@ -1046,24 +1754,21 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
                 const cells = row.querySelectorAll('td');
                 try {
                     const ma_sp = cells[1].innerText;
-                    const ten_sp = cells[2].innerText;
-                    const gia_goc = parseVietnameseNumber(cells[4].innerText) || 0; // Dùng hàm đã sửa
-                    // const chiet_khau_percent = parseVietnameseNumber(cells[5].innerText.replace('%', '')) || 0; // Không dùng
-                    const quy_cach = parseInt(cells[7].innerText.replace(/[.,]/g, '')) || 1;
+                    const ten_sp = cells[3].innerText;
+                    const gia_goc = parsePrice(cells[4].innerText) || 0;
+                    const quy_cach = parseQuantity(cells[7].innerText) || 1;
 
                     if (quy_cach === 0) return;
 
-                    // YÊU CẦU MỚI: Giá bán đơn vị = Giá gốc / Quy cách
                     let gia_ban_don_vi = (gia_goc / quy_cach);
-
                     const gia_ban_don_vi_lam_tron = Math.round(gia_ban_don_vi);
 
                     htmlRows += `
                         <tr>
                             <td>${ma_sp}</td>
                             <td>${ten_sp}</td>
-                            <td style="text-align: right;">${quy_cach.toLocaleString('en-US')}</td>
-                            <td style="text-align: right; font-weight: 600; color: var(--error-color);">${gia_ban_don_vi_lam_tron.toLocaleString('en-US')}</td>
+                            <td style="text-align: right;">${formatNumber(quy_cach)}</td>
+                            <td style="text-align: right; font-weight: 600; color: var(--error-color);">${formatNumber(gia_ban_don_vi_lam_tron)}</td>
                         </tr>
                     `;
                 } catch (e) {
@@ -1075,42 +1780,76 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
             hdModal.classList.add('modal-show');
         });
 
-        // HÀM THÊM HÀNG MỚI
         addRowBtn.addEventListener('click', () => {
             if (!getSelectedDatasetKey()) { alert("Vui lòng chọn một bảng dữ liệu trước khi thêm hàng."); return; }
             dataTableBody.appendChild(createTableRow({ stt: dataTableBody.rows.length + 1 }, true));
         });
 
-        // HÀM XUẤT EXCEL (BẢNG GỐC)
         exportExcelBtn.addEventListener('click', () => {
-            const datasetKey = getSelectedDatasetKey();
-            if (!datasetKey) { alert("Vui lòng chọn bảng dữ liệu để xuất."); return; }
-            const rows = dataTableBody.querySelectorAll('tr');
-            if (rows.length === 0 || dataTableBody.querySelector('td[colspan="9"]')) { alert("Không có dữ liệu để xuất!"); return; }
-            
-            const data = Array.from(rows).map(row => {
-                const cells = row.querySelectorAll('td');
-                return { 
-                    'STT': cells[0].innerText, 
-                    'Mã SP': cells[1].innerText, 
-                    'Tên sản phẩm': cells[2].innerText, 
-                    'ĐVT': cells[3].innerText, 
-                    'Gía bán (Unit price)': cells[4].innerText,
-                    'Chiết khấu (%)': cells[5].innerText,
-                    'Gía xuất (HD) VAT': cells[6].innerText,
-                    'Quy cách': cells[7].innerText
-                };
-            });
-            const ws = XLSX.utils.json_to_sheet(data);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, datasetKey);
-            XLSX.writeFile(wb, `${datasetKey}.xlsx`);
+            try {
+                const datasetKey = getSelectedDatasetKey();
+                if (!datasetKey) { 
+                    alert("Vui lòng chọn bảng dữ liệu để xuất."); 
+                    return; 
+                }
+                
+                const rows = dataTableBody.querySelectorAll('tr');
+                
+                const hasRealData = Array.from(rows).some(row => 
+                    !row.querySelector('td[colspan]') && row.querySelectorAll('td').length >= 9
+                );
+                
+                if (!hasRealData || rows.length === 0) { 
+                    alert("Không có dữ liệu để xuất!"); 
+                    return; 
+                }
+                
+                console.log("Bắt đầu xuất Excel cho bảng:", datasetKey);
+                console.log("Số hàng dữ liệu:", rows.length);
+                
+                const data = [];
+                
+                Array.from(rows).forEach((row, index) => {
+                    if (row.querySelector('td[colspan]')) {
+                        return;
+                    }
+                    
+                    const cells = row.querySelectorAll('td');
+                    if (cells.length >= 9) {
+                        data.push({ 
+                            'STT': cells[0].innerText.trim(), 
+                            'Mã SP': cells[1].innerText.trim(), 
+                            'Mã ERP': cells[2].innerText.trim(),
+                            'Tên sản phẩm': cells[3].innerText.trim(), 
+                            'Giá bán': cells[4].innerText.trim(),
+                            'Chiết khấu (%)': cells[5].innerText.trim(),
+                            'Giá xuất VAT': cells[6].innerText.trim(),
+                            'Quy cách': cells[7].innerText.trim()
+                        });
+                    }
+                });
+                
+                if (data.length === 0) {
+                    alert("Không tìm thấy dữ liệu hợp lệ để xuất!");
+                    return;
+                }
+                
+                const ws = XLSX.utils.json_to_sheet(data);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, datasetKey.substring(0, 31));
+                XLSX.writeFile(wb, `${datasetKey}.xlsx`);
+                
+                console.log("Xuất Excel thành công!");
+                
+            } catch (error) {
+                console.error("Lỗi khi xuất Excel:", error);
+                alert("Đã xảy ra lỗi khi xuất file Excel: " + error.message);
+            }
         });
 
-        // GIỮ NGUYÊN HÀM XUẤT EXCEL ĐƠN HÀNG BÁN
         exportSalesOrderBtn.addEventListener('click', () => {
             const rows = salesOrderTableBody.querySelectorAll('tr');
-            if (rows.length === 0 || salesOrderTableBody.querySelector('td[colspan="7"]')) {
+            if (rows.length === 0 || salesOrderTableBody.querySelector('td[colspan="8"]')) {
                 alert("Không có dữ liệu để xuất!"); 
                 return; 
             }
@@ -1121,11 +1860,12 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
                     return { 
                         'STT': cells[0].innerText, 
                         'Mã': cells[1].innerText, 
-                        'Tên sản phẩm': cells[2].innerText, 
-                        'Quy cách đơn vị mua': cells[3].innerText, 
-                        'Giá bán đơn vị': cells[4].innerText,
-                        'Tổng giá trị': cells[5].innerText,
-                        'Thuế 5%': cells[6].innerText 
+                        'Mã ERP': cells[2].innerText,
+                        'Tên sản phẩm': cells[3].innerText, 
+                        'Quy cách đơn vị mua': cells[4].innerText, 
+                        'Giá bán đơn vị': cells[5].innerText,
+                        'Tổng giá trị': cells[6].innerText,
+                        'Thuế 5%': cells[7].innerText 
                     };
                 });
                 const ws = XLSX.utils.json_to_sheet(data);
@@ -1137,96 +1877,106 @@ STT	Mã sản phẩm	Tên sản phẩm	Giá
             }
         });
 
-        // HÀM XUẤT EXCEL ĐƠN HÀNG KHÁCH HÀNG
-       // HÀM XUẤT EXCEL ĐƠN HÀNG KHÁCH HÀNG
-exportCustomerOrderBtn.addEventListener('click', () => {
-    const rows = customerOrderTableBody.querySelectorAll('tr');
-    if (rows.length === 0 || customerOrderTableBody.querySelector('td[colspan="8"]')) {
-        alert("Không có dữ liệu để xuất!"); 
-        return; 
-    }
-    
-    try {
-        const data = Array.from(rows).map(row => {
-            const cells = row.querySelectorAll('td');
-            return { 
-                'STT': cells[0].innerText, 
-                'MÃ': cells[1].innerText, 
-                'Tên sản phẩm': cells[2].innerText, 
-                'Gía bán (Gốc)': cells[3].innerText, 
-                'Chiết khấu (Gốc)': cells[4].innerText,
-                'Sản lượng': cells[5].innerText,
-                'Gía xuất (HD) VAT (Gốc)': cells[6].innerText,
-                'Tổng tiền (Gốc)': cells[7].innerText 
-            };
+        exportCustomerOrderBtn.addEventListener('click', () => {
+            const rows = customerOrderTableBody.querySelectorAll('tr');
+            if (rows.length === 0 || customerOrderTableBody.querySelector('td[colspan="9"]')) {
+                alert("Không có dữ liệu để xuất!"); 
+                return; 
+            }
+            
+            try {
+                const data = Array.from(rows).map(row => {
+                    const cells = row.querySelectorAll('td');
+                    return { 
+                        'STT': cells[0].innerText, 
+                        'MÃ': cells[1].innerText, 
+                        'MÃ ERP': cells[2].innerText,
+                        'Tên sản phẩm': cells[3].innerText, 
+                        'Giá bán (Gốc)': cells[4].innerText, 
+                        'Chiết khấu (Gốc)': cells[5].innerText,
+                        'Sản lượng': cells[6].innerText,
+                        'Giá xuất VAT (Gốc)': cells[7].innerText,
+                        'Tổng tiền (Gốc)': cells[8].innerText 
+                    };
+                });
+                const ws = XLSX.utils.json_to_sheet(data);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Don_Hang_Khach_Hang_Goc");
+                XLSX.writeFile(wb, `Don_Hang_Khach_Hang_Goc.xlsx`);
+            } catch (e) {
+                alert("Đã xảy ra lỗi khi xuất file Excel: " + e.message);
+            }
         });
-        const ws = XLSX.utils.json_to_sheet(data);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Don_Hang_Khach_Hang_Goc");
-        XLSX.writeFile(wb, `Don_Hang_Khach_Hang_Goc.xlsx`); // ĐÃ SỬA LỖI CHÍNH TẢ Ở ĐÂY
-    } catch (e) {
-        alert("Đã xảy ra lỗi khi xuất file Excel: " + e.message);
-    }
-});
 
-        // HÀM HIỂN THỊ KẾT QUẢ
-        function displayResults(correct, incorrect, salesOrderItems, customerOrderItems) {
-            resultContainer.classList.remove('hidden');
-            
-            // Tab 1: Kết Quả So Giá
-            resultsDiv.innerHTML = `<div class="result-section correct"><h3 style="color: var(--success-color);">✅ ĐÚNG (${correct.length})</h3><ul>${correct.length>0?correct.join(''):'<li>Không có.</li>'}</ul></div><div class="result-section incorrect"><h3 style="color: var(--error-color);">❌ SAI / KHÔNG TÌM THẤY (${incorrect.length})</h3><ul>${incorrect.length>0?incorrect.join(''):'<li>Không có.</li>'}</ul></div>`;
-
-            // Tab 2: Đơn Hàng Bán
-            salesOrderTableBody.innerHTML = '';
-            if (salesOrderItems && salesOrderItems.length > 0) {
-                salesOrderItems.forEach(item => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${item.stt}</td>
-                        <td>${item.ma_sp}</td>
-                        <td>${item.ten_sp}</td>
-                        <td style="text-align: right;">${item.quy_cach_don_vi_mua.toLocaleString('en-US')}</td>
-                        <td style="text-align: right;">${item.gia_ban_don_vi.toLocaleString('en-US')}</td>
-                        <td style="text-align: right; font-weight: 600;">${item.tong_gia_tri.toLocaleString('en-US')}</td>
-                        <td style="text-align: right;">${Math.round(item.thue_5).toLocaleString('en-US')}</td>
-                    `;
-                    salesOrderTableBody.appendChild(row);
-                });
-            } else {
-                salesOrderTableBody.innerHTML = '<tr><td colspan="7" style="text-align: center;">Không có dữ liệu đơn hàng bán (cần ánh xạ cột "Số lượng" và sản phẩm phải có trong dữ liệu gốc).</td></tr>';
+        exportDeliveryOrderBtn.addEventListener('click', () => {
+            const rows = document.querySelectorAll('#deliveryOrderTableBody tr');
+            if (rows.length === 0 || document.querySelector('#deliveryOrderTableBody td[colspan="8"]')) {
+                alert("Không có dữ liệu để xuất!");
+                return;
             }
-
-            // Tab 3: Đơn Hàng Khách Hàng
-            customerOrderTableBody.innerHTML = '';
-            if (customerOrderItems && customerOrderItems.length > 0) {
-                customerOrderItems.forEach(item => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${item.stt}</td>
-                        <td>${item.ma_sp}</td>
-                        <td>${item.ten_sp}</td>
-                        <td style="text-align: right;">${item.gia_ban_dh}</td>
-                        <td style="text-align: right;">${item.chiet_khau_dh}</td>
-                        <td style="text-align: right;">${item.so_luong_dh.toLocaleString('en-US')}</td>
-                        <td style="text-align: right; font-weight: 600; color:var(--primary-color);">${item.gia_xuat_hd_goc.toLocaleString('en-US')}</td>
-                        <td style="text-align: right; font-weight: 600; color:var(--error-color);">${item.tong_tien.toLocaleString('en-US')}</td>
-                    `;
-                    customerOrderTableBody.appendChild(row);
-                });
-            } else {
-                customerOrderTableBody.innerHTML = '<tr><td colspan="8" style="text-align: center;">Không có dữ liệu đơn hàng (cần ánh xạ cột "Số lượng" và sản phẩm phải có trong dữ liệu gốc).</td></tr>';
-            }
-
-            // Đặt lại tab mặc định là "Kết Quả So Giá"
-            resultTabButtonsContainer.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-            document.querySelectorAll('#resultContainer .tab-content').forEach(content => content.classList.remove('active'));
             
-            resultTabButtonsContainer.querySelector('[data-tab="result-check-tab"]').classList.add('active');
-            document.getElementById('result-check-tab').classList.add('active');
-        }
+            try {
+                const data = Array.from(rows).map(row => {
+                    const cells = row.querySelectorAll('td');
+                    return {
+                        'STT': cells[0].innerText,
+                        'Mã SP': cells[1].innerText,
+                        'Mã ERP': cells[2].innerText,
+                        'Tên sản phẩm': cells[3].innerText,
+                        'Số lượng đặt hàng': cells[4].innerText,
+                        'Tồn kho hiện có': cells[5].innerText,
+                        'Số lượng tạm giao': cells[6].innerText,
+                        'Ghi chú': cells[7].innerText
+                    };
+                });
+                
+                const ws = XLSX.utils.json_to_sheet(data);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Don_Hang_Tam_Giao");
+                XLSX.writeFile(wb, "Don_Hang_Tam_Giao.xlsx");
+            } catch (e) {
+                alert("Đã xảy ra lỗi khi xuất file Excel: " + e.message);
+            }
+        });
+
+        exportPurchaseOrderBtn.addEventListener('click', () => {
+            const rows = document.querySelectorAll('#purchaseOrderTableBody tr');
+            if (rows.length === 0 || document.querySelector('#purchaseOrderTableBody td[colspan="8"]')) {
+                alert("Không có dữ liệu để xuất!");
+                return;
+            }
+            
+            try {
+                const data = Array.from(rows).map(row => {
+                    const cells = row.querySelectorAll('td');
+                    return {
+                        'STT': cells[0].innerText,
+                        'Mã SP': cells[1].innerText,
+                        'Mã ERP': cells[2].innerText,
+                        'Tên sản phẩm': cells[3].innerText,
+                        'Số lượng đặt hàng': cells[4].innerText,
+                        'Tồn kho hiện có': cells[5].innerText,
+                        'Số lượng cần đặt thêm': cells[6].innerText,
+                        'Ghi chú': cells[7].innerText
+                    };
+                });
+                
+                const ws = XLSX.utils.json_to_sheet(data);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Don_Can_Dat_NCC");
+                XLSX.writeFile(wb, "Don_Can_Dat_NCC.xlsx");
+            } catch (e) {
+                alert("Đã xảy ra lỗi khi xuất file Excel: " + e.message);
+            }
+        });
+
+        // KHỞI TẠO ỨNG DỤNG
+        datasetSelector.addEventListener('change', () => {
+            loadDataFromFirebase();
+            currentDatasetNameSpan.textContent = getSelectedDatasetKey() || '...';
+        });
 
         document.addEventListener('DOMContentLoaded', populateDatasetSelector);
     </script>
 </body>
 </html>
-
