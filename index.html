@@ -1117,11 +1117,6 @@
             const deliveryOrderTableBody = document.getElementById('deliveryOrderTableBody');
             const purchaseOrderTableBody = document.getElementById('purchaseOrderTableBody');
             
-            console.log("=== HIỂN THỊ KẾT QUẢ PHÂN TÍCH ===");
-            console.log("Số lượng đơn giao:", deliveryItems.length);
-            console.log("Số lượng đơn đặt thêm:", purchaseItems.length);
-            console.log("Dữ liệu đơn đặt thêm:", purchaseItems);
-            
             // Tính tổng số lượng
             const totalDelivery = deliveryItems.reduce((sum, item) => sum + (item.so_luong_giao || 0), 0);
             const totalPurchase = purchaseItems.reduce((sum, item) => sum + (item.so_luong_dat_them || 0), 0);
@@ -1165,13 +1160,10 @@
                 `;
             }
             
-            // HIỂN THỊ BẢNG ĐƠN CẦN ĐẶT THÊM - SỬA LỖI QUAN TRỌNG
+            // HIỂN THỊ BẢNG ĐƠN CẦN ĐẶT THÊM - ĐÃ SỬA LỖI
             purchaseOrderTableBody.innerHTML = '';
-            console.log("Bắt đầu hiển thị đơn đặt thêm, số lượng:", purchaseItems.length);
-            
             if (purchaseItems.length > 0) {
                 purchaseItems.forEach((item, index) => {
-                    console.log("Hiển thị item:", item);
                     const row = document.createElement('tr');
                     row.innerHTML = `
                         <td>${item.stt}</td>
@@ -1185,7 +1177,6 @@
                     `;
                     purchaseOrderTableBody.appendChild(row);
                 });
-                console.log("Đã hiển thị xong", purchaseItems.length, "sản phẩm trong đơn đặt thêm");
             } else {
                 purchaseOrderTableBody.innerHTML = `
                     <tr>
@@ -1195,14 +1186,13 @@
                         </td>
                     </tr>
                 `;
-                console.log("Không có dữ liệu đơn đặt thêm để hiển thị");
             }
 
             // ĐẢM BẢO CÁC TAB PHÂN TÍCH ĐƯỢC KÍCH HOẠT
             activateInventoryTabs();
         }
 
-        // HÀM KÍCH HOẠT TAB PHÂN TÍCH TỒN KHO
+        // HÀM KÍCH HOẠT TAB PHÂN TÍCH TỒN KHO - ĐÃ SỬA LỖI
         function activateInventoryTabs() {
             // Kích hoạt tab phân tích tồn kho chính
             const inventoryTabBtn = resultTabButtonsContainer.querySelector('[data-tab="result-inventory-tab"]');
@@ -1226,10 +1216,10 @@
             const deliveryTabContent = document.getElementById('delivery-order-tab');
             
             if (deliveryTabBtn && deliveryTabContent) {
-                document.querySelectorAll('#result-inventory-tab .tab-button').forEach(btn => {
+                document.querySelectorAll('#result-inventory-tab .analysis-tabs .tab-button').forEach(btn => {
                     btn.classList.remove('active');
                 });
-                document.querySelectorAll('#result-inventory-tab .tab-content').forEach(content => {
+                document.querySelectorAll('#result-inventory-tab .analysis-tabs .tab-content').forEach(content => {
                     content.classList.remove('active');
                 });
                 
@@ -1272,25 +1262,23 @@
             }
         });
 
-        // SỰ KIỆN CHO CÁC TAB PHÂN TÍCH TỒN KHO - ĐÃ SỬA LỖI
+        // SỰ KIỆN CHO CÁC TAB PHÂN TÍCH TỒN KHO - ĐÃ SỬA LỖI HOÀN TOÀN
         document.addEventListener('DOMContentLoaded', function() {
-            const inventoryTabButtons = document.querySelector('#result-inventory-tab .tab-buttons');
-            console.log("Khởi tạo sự kiện tab phân tích tồn kho, tồn tại:", !!inventoryTabButtons);
-            
-            if (inventoryTabButtons) {
-                inventoryTabButtons.addEventListener('click', (e) => {
+            const inventoryAnalysisTabs = document.querySelector('#result-inventory-tab .analysis-tabs');
+            if (inventoryAnalysisTabs) {
+                inventoryAnalysisTabs.addEventListener('click', (e) => {
                     if (e.target.classList.contains('tab-button')) {
                         const tabId = e.target.getAttribute('data-tab');
                         
-                        console.log("Click tab phân tích:", tabId);
+                        console.log("Click tab phân tích tồn kho:", tabId);
                         
                         // Xóa active từ tất cả các tab button trong phân tích tồn kho
-                        document.querySelectorAll('#result-inventory-tab .tab-button').forEach(btn => {
+                        inventoryAnalysisTabs.querySelectorAll('.tab-button').forEach(btn => {
                             btn.classList.remove('active');
                         });
                         
                         // Ẩn tất cả các tab content trong phân tích tồn kho
-                        document.querySelectorAll('#result-inventory-tab .tab-content').forEach(content => {
+                        document.querySelectorAll('#result-inventory-tab .analysis-tabs .tab-content').forEach(content => {
                             content.classList.remove('active');
                         });
                         
@@ -1301,13 +1289,7 @@
                         const targetTab = document.getElementById(tabId);
                         if (targetTab) {
                             targetTab.classList.add('active');
-                            console.log("Đã hiển thị tab:", tabId);
-                            
-                            // DEBUG: Kiểm tra nội dung tab
-                            if (tabId === 'purchase-order-tab') {
-                                const rows = document.querySelectorAll('#purchaseOrderTableBody tr');
-                                console.log("Số hàng trong tab đặt NCC:", rows.length);
-                            }
+                            console.log("Hiển thị tab phân tích tồn kho:", tabId);
                         }
                     }
                 });
@@ -1910,62 +1892,111 @@
 
         exportDeliveryOrderBtn.addEventListener('click', () => {
             const rows = document.querySelectorAll('#deliveryOrderTableBody tr');
-            if (rows.length === 0 || document.querySelector('#deliveryOrderTableBody td[colspan="8"]')) {
+            
+            // Kiểm tra xem có dữ liệu thực sự không (loại bỏ hàng thông báo không có dữ liệu)
+            const hasRealData = Array.from(rows).some(row => 
+                !row.querySelector('td[colspan]') && row.querySelectorAll('td').length >= 8
+            );
+            
+            if (!hasRealData || rows.length === 0) {
                 alert("Không có dữ liệu để xuất!");
                 return;
             }
             
             try {
-                const data = Array.from(rows).map(row => {
+                const data = [];
+                
+                Array.from(rows).forEach(row => {
+                    // Bỏ qua hàng thông báo không có dữ liệu
+                    if (row.querySelector('td[colspan]')) {
+                        return;
+                    }
+                    
                     const cells = row.querySelectorAll('td');
-                    return {
-                        'STT': cells[0].innerText,
-                        'Mã SP': cells[1].innerText,
-                        'Mã ERP': cells[2].innerText,
-                        'Tên sản phẩm': cells[3].innerText,
-                        'Số lượng đặt hàng': cells[4].innerText,
-                        'Tồn kho hiện có': cells[5].innerText,
-                        'Số lượng tạm giao': cells[6].innerText,
-                        'Ghi chú': cells[7].innerText
-                    };
+                    if (cells.length >= 8) {
+                        data.push({
+                            'STT': cells[0].innerText,
+                            'Mã SP': cells[1].innerText,
+                            'Mã ERP': cells[2].innerText,
+                            'Tên sản phẩm': cells[3].innerText,
+                            'Số lượng đặt hàng': cells[4].innerText,
+                            'Tồn kho hiện có': cells[5].innerText,
+                            'Số lượng tạm giao': cells[6].innerText,
+                            'Ghi chú': cells[7].innerText
+                        });
+                    }
                 });
+                
+                if (data.length === 0) {
+                    alert("Không có dữ liệu hợp lệ để xuất!");
+                    return;
+                }
                 
                 const ws = XLSX.utils.json_to_sheet(data);
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, ws, "Don_Hang_Tam_Giao");
                 XLSX.writeFile(wb, "Don_Hang_Tam_Giao.xlsx");
+                
+                console.log("Xuất Excel đơn hàng tạm giao thành công!", data);
+                
             } catch (e) {
+                console.error("Lỗi khi xuất Excel đơn hàng tạm giao:", e);
                 alert("Đã xảy ra lỗi khi xuất file Excel: " + e.message);
             }
         });
 
+        // BỔ SUNG: XUẤT EXCEL CHO ĐƠN CẦN ĐẶT NCC
         exportPurchaseOrderBtn.addEventListener('click', () => {
             const rows = document.querySelectorAll('#purchaseOrderTableBody tr');
-            if (rows.length === 0 || document.querySelector('#purchaseOrderTableBody td[colspan="8"]')) {
+            
+            // Kiểm tra xem có dữ liệu thực sự không (loại bỏ hàng thông báo không có dữ liệu)
+            const hasRealData = Array.from(rows).some(row => 
+                !row.querySelector('td[colspan]') && row.querySelectorAll('td').length >= 8
+            );
+            
+            if (!hasRealData || rows.length === 0) {
                 alert("Không có dữ liệu để xuất!");
                 return;
             }
             
             try {
-                const data = Array.from(rows).map(row => {
+                const data = [];
+                
+                Array.from(rows).forEach(row => {
+                    // Bỏ qua hàng thông báo không có dữ liệu
+                    if (row.querySelector('td[colspan]')) {
+                        return;
+                    }
+                    
                     const cells = row.querySelectorAll('td');
-                    return {
-                        'STT': cells[0].innerText,
-                        'Mã SP': cells[1].innerText,
-                        'Mã ERP': cells[2].innerText,
-                        'Tên sản phẩm': cells[3].innerText,
-                        'Số lượng đặt hàng': cells[4].innerText,
-                        'Tồn kho hiện có': cells[5].innerText,
-                        'Số lượng cần đặt thêm': cells[6].innerText,
-                        'Ghi chú': cells[7].innerText
-                    };
+                    if (cells.length >= 8) {
+                        data.push({
+                            'STT': cells[0].innerText,
+                            'Mã SP': cells[1].innerText,
+                            'Mã ERP': cells[2].innerText,
+                            'Tên sản phẩm': cells[3].innerText,
+                            'Số lượng đặt hàng': cells[4].innerText,
+                            'Tồn kho hiện có': cells[5].innerText,
+                            'Số lượng cần đặt thêm': cells[6].innerText,
+                            'Ghi chú': cells[7].innerText
+                        });
+                    }
                 });
+                
+                if (data.length === 0) {
+                    alert("Không có dữ liệu hợp lệ để xuất!");
+                    return;
+                }
                 
                 const ws = XLSX.utils.json_to_sheet(data);
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, ws, "Don_Can_Dat_NCC");
                 XLSX.writeFile(wb, "Don_Can_Dat_NCC.xlsx");
+                
+                console.log("Xuất Excel đơn cần đặt NCC thành công!", data);
+                
             } catch (e) {
+                console.error("Lỗi khi xuất Excel đơn cần đặt NCC:", e);
                 alert("Đã xảy ra lỗi khi xuất file Excel: " + e.message);
             }
         });
