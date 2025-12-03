@@ -77,21 +77,38 @@
             margin-top: 12px;
             cursor: pointer;
             transition: all 0.2s;
+            width: 100%; /* Đảm bảo khung bao rộng hết mức */
+            box-sizing: border-box;
         }
         .paste-area:hover {
             border-color: var(--primary-color);
             background-color: #f0f6ff;
         }
+
+        /* === PHẦN CHỈNH SỬA QUAN TRỌNG NHẤT Ở ĐÂY === */
         .paste-area textarea {
             width: 100%;
-            height: 120px;
+            height: 400px; /* Tăng chiều cao lên 400px để thoải mái dán */
             border: 1px solid var(--border-color);
             border-radius: 4px;
             padding: 12px;
-            font-family: 'Be Vietnam Pro', sans-serif;
-            font-size: 14px;
-            resize: vertical;
+            
+            /* Dùng font monospace (đơn không gian) để các cột thẳng hàng */
+            font-family: 'Courier New', Courier, monospace; 
+            font-size: 13px;
+            
+            /* QUAN TRỌNG: Ngăn chặn tự động xuống dòng */
+            white-space: pre; 
+            
+            /* QUAN TRỌNG: Hiện thanh cuộn ngang khi dữ liệu dài */
+            overflow-x: auto; 
+            overflow-y: auto;
+            
+            line-height: 1.5;
+            box-sizing: border-box;
         }
+        /* ============================================== */
+
         .paste-area textarea:focus {
             border-color: var(--primary-color);
             outline: none;
@@ -789,7 +806,7 @@
             section.classList.remove('hidden');
         }
 
-        // HÀM TẠO HÀNG TRONG BẢNG - ĐÃ SỬA LỖI MÃ ERP
+        // HÀM TẠO HÀNG TRONG BẢNG
         function createTableRow(item, isNew = false) {
             const row = document.createElement('tr');
             
@@ -821,13 +838,13 @@
             }).format(num);
         }
 
-        // HÀM HIỂN THỊ KẾT QUẢ - ĐÃ THÊM MÃ ERP
+        // HÀM HIỂN THỊ KẾT QUẢ
         function displayResults(correct, incorrect, salesOrderItems, customerOrderItems) {
             resultContainer.classList.remove('hidden');
             
             resultsDiv.innerHTML = `<div class="result-section correct"><h3 style="color: var(--success-color);">✅ ĐÚNG (${correct.length})</h3><ul>${correct.length>0?correct.join(''):'<li>Không có.</li>'}</ul></div><div class="result-section incorrect"><h3 style="color: var(--error-color);">❌ SAI / KHÔNG TÌM THẤY (${incorrect.length})</h3><ul>${incorrect.length>0?incorrect.join(''):'<li>Không có.</li>'}</ul></div>`;
 
-            // CẬP NHẬT BẢNG ĐƠN HÀNG BÁN - THÊM MÃ ERP
+            // CẬP NHẬT BẢNG ĐƠN HÀNG BÁN
             salesOrderTableBody.innerHTML = '';
             if (salesOrderItems && salesOrderItems.length > 0) {
                 salesOrderItems.forEach(item => {
@@ -848,7 +865,7 @@
                 salesOrderTableBody.innerHTML = '<tr><td colspan="8" style="text-align: center;">Không có dữ liệu đơn hàng bán.</td></tr>';
             }
 
-            // CẬP NHẬT BẢNG ĐƠN HÀNG KHÁCH HÀNG - THÊM MÃ ERP
+            // CẬP NHẬT BẢNG ĐƠN HÀNG KHÁCH HÀNG
             customerOrderTableBody.innerHTML = '';
             if (customerOrderItems && customerOrderItems.length > 0) {
                 customerOrderItems.forEach(item => {
@@ -877,44 +894,84 @@
             document.getElementById('result-check-tab').classList.add('active');
         }
 
-        // HÀM XỬ LÝ DÁN DỮ LIỆU
+        // HÀM XỬ LÝ DÁN DỮ LIỆU - PHIÊN BẢN CẢI TIẾN (FIX LỖI XUỐNG DÒNG)
         function parsePastedData(pastedText) {
             try {
-                const lines = pastedText.trim().split('\n');
-                if (lines.length < 2) {
+                // Tách các dòng cơ bản
+                const rawLines = pastedText.trim().split('\n');
+                if (rawLines.length < 2) {
                     throw new Error("Dữ liệu phải có ít nhất 2 dòng (tiêu đề và dữ liệu)");
                 }
 
-                const firstLine = lines[0];
+                const firstLine = rawLines[0];
+                // Ưu tiên tab (Excel thường dùng tab), nếu không có tab thì dùng dấu phẩy
                 const hasTabs = firstLine.includes('\t');
                 const separator = hasTabs ? '\t' : ',';
                 
+                // Lấy danh sách tiêu đề và số lượng cột tiêu chuẩn
                 const headers = firstLine.split(separator).map(header => header.trim());
+                const expectedColumns = headers.length;
                 
                 const jsonData = [];
-                for (let i = 1; i < lines.length; i++) {
-                    if (lines[i].trim() === '') continue;
+                
+                // Bắt đầu duyệt từ dòng thứ 2 (index 1)
+                let i = 1;
+                while (i < rawLines.length) {
+                    let currentLineStr = rawLines[i].replace(/\r/g, ""); // Xóa ký tự \r nếu có
                     
-                    const cells = lines[i].split(separator);
+                    if (currentLineStr.trim() === '') {
+                        i++;
+                        continue;
+                    }
+
+                    // Tách dòng hiện tại thành các cột
+                    let cells = currentLineStr.split(separator);
+
+                    // --- LOGIC SỬA LỖI: TỰ ĐỘNG NỐI DÒNG ---
+                    // Nếu số cột hiện tại ít hơn số cột tiêu đề, có nghĩa là dòng bị ngắt xuống dưới
+                    // Ta sẽ nối dòng tiếp theo vào dòng này cho đến khi số cột >= số cột tiêu đề (trừ đi 1 sai số nhỏ)
+                    while (cells.length < expectedColumns && (i + 1) < rawLines.length) {
+                        i++; // Nhảy sang dòng kế tiếp trong dữ liệu thô
+                        const nextLine = rawLines[i].replace(/\r/g, "").trim();
+                        
+                        // Nối nội dung dòng kế tiếp vào cột cuối cùng của dòng hiện tại
+                        // Thêm khoảng trắng để tránh dính chữ
+                        currentLineStr += " " + nextLine;
+                        
+                        // Tách lại để kiểm tra số cột
+                        cells = currentLineStr.split(separator);
+                    }
+                    // ------------------------------------------
+                    
                     const row = {};
                     
+                    // Map dữ liệu vào tiêu đề
                     headers.forEach((header, index) => {
-                        row[header] = cells[index] ? cells[index].trim() : '';
+                        // Loại bỏ các ký tự quote " bao quanh nếu có (do excel sinh ra khi có xuống dòng)
+                        let cellValue = cells[index] ? cells[index].trim() : '';
+                        if (cellValue.startsWith('"') && cellValue.endsWith('"')) {
+                            cellValue = cellValue.substring(1, cellValue.length - 1);
+                        }
+                        row[header] = cellValue;
                     });
                     
                     jsonData.push(row);
+                    i++; // Tăng index để qua dòng tiếp theo
                 }
 
                 if (jsonData.length === 0) {
                     throw new Error("Không có dữ liệu hợp lệ sau dòng tiêu đề");
                 }
 
+                console.log(`Đã xử lý ${jsonData.length} dòng dữ liệu.`);
+                
                 return {
                     headers: headers,
                     data: jsonData
                 };
             } catch (error) {
-                throw new Error("Lỗi khi xử lý dữ liệu dán: " + error.message);
+                console.error(error);
+                throw new Error("Lỗi khi xử lý dữ liệu dán: " + error.message + "\n(Hãy đảm bảo bạn copy đủ cả dòng tiêu đề)");
             }
         }
 
@@ -974,7 +1031,7 @@
             }
         }
 
-        // ========== HÀM PHÂN TÍCH TỒN KHO (ĐÃ SỬA HOÀN CHỈNH) ==========
+        // HÀM PHÂN TÍCH TỒN KHO
         function performInventoryAnalysis() {
             console.log("=== BẮT ĐẦU PHÂN TÍCH TỒN KHO (THEO MÃ ERP) ===");
             
@@ -1112,7 +1169,7 @@
             }, 500);
         }
 
-        // HÀM HIỂN THỊ KẾT QUẢ PHÂN TÍCH TỒN KHO (ĐÃ SỬA HOÀN CHỈNH)
+        // HÀM HIỂN THỊ KẾT QUẢ PHÂN TÍCH TỒN KHO
         function displayInventoryAnalysis(deliveryItems, purchaseItems, matchedCount, unmatchedCount) {
             const deliveryOrderTableBody = document.getElementById('deliveryOrderTableBody');
             const purchaseOrderTableBody = document.getElementById('purchaseOrderTableBody');
@@ -1160,7 +1217,7 @@
                 `;
             }
             
-            // HIỂN THỊ BẢNG ĐƠN CẦN ĐẶT THÊM - ĐÃ SỬA LỖI
+            // HIỂN THỊ BẢNG ĐƠN CẦN ĐẶT THÊM
             purchaseOrderTableBody.innerHTML = '';
             if (purchaseItems.length > 0) {
                 purchaseItems.forEach((item, index) => {
@@ -1192,7 +1249,7 @@
             activateInventoryTabs();
         }
 
-        // HÀM KÍCH HOẠT TAB PHÂN TÍCH TỒN KHO - ĐÃ SỬA LỖI
+        // HÀM KÍCH HOẠT TAB PHÂN TÍCH TỒN KHO
         function activateInventoryTabs() {
             // Kích hoạt tab phân tích tồn kho chính
             const inventoryTabBtn = resultTabButtonsContainer.querySelector('[data-tab="result-inventory-tab"]');
@@ -1262,7 +1319,6 @@
             }
         });
 
-        // SỰ KIỆN CHO CÁC TAB PHÂN TÍCH TỒN KHO - ĐÃ SỬA LỖI HOÀN TOÀN
         document.addEventListener('DOMContentLoaded', function() {
             const inventoryAnalysisTabs = document.querySelector('#result-inventory-tab .analysis-tabs');
             if (inventoryAnalysisTabs) {
@@ -1296,7 +1352,7 @@
             }
         });
 
-        // SỰ KIỆN CHO DỮ LIỆU CHÍNH - ĐÃ SỬA LỖI MÃ ERP
+        // SỰ KIỆN CHO DỮ LIỆU CHÍNH
         uploadMasterInput.addEventListener('change', (event) => {
             const file = event.target.files[0];
             if (!file) return;
@@ -1669,7 +1725,7 @@
             performInventoryAnalysis();
         });
 
-        // SỰ KIỆN CHO CÁC NÚT CHỨC NĂNG - ĐÃ SỬA LỖI MÃ ERP
+        // SỰ KIỆN CHO CÁC NÚT CHỨC NĂNG
         clearDataBtn.addEventListener('click', () => {
             const datasetKey = getSelectedDatasetKey();
             if (!datasetKey) { alert("Vui lòng chọn một bảng dữ liệu để xóa."); return; }
@@ -1893,7 +1949,6 @@
         exportDeliveryOrderBtn.addEventListener('click', () => {
             const rows = document.querySelectorAll('#deliveryOrderTableBody tr');
             
-            // Kiểm tra xem có dữ liệu thực sự không (loại bỏ hàng thông báo không có dữ liệu)
             const hasRealData = Array.from(rows).some(row => 
                 !row.querySelector('td[colspan]') && row.querySelectorAll('td').length >= 8
             );
@@ -1907,7 +1962,6 @@
                 const data = [];
                 
                 Array.from(rows).forEach(row => {
-                    // Bỏ qua hàng thông báo không có dữ liệu
                     if (row.querySelector('td[colspan]')) {
                         return;
                     }
@@ -1945,11 +1999,9 @@
             }
         });
 
-        // BỔ SUNG: XUẤT EXCEL CHO ĐƠN CẦN ĐẶT NCC
         exportPurchaseOrderBtn.addEventListener('click', () => {
             const rows = document.querySelectorAll('#purchaseOrderTableBody tr');
             
-            // Kiểm tra xem có dữ liệu thực sự không (loại bỏ hàng thông báo không có dữ liệu)
             const hasRealData = Array.from(rows).some(row => 
                 !row.querySelector('td[colspan]') && row.querySelectorAll('td').length >= 8
             );
@@ -1963,7 +2015,6 @@
                 const data = [];
                 
                 Array.from(rows).forEach(row => {
-                    // Bỏ qua hàng thông báo không có dữ liệu
                     if (row.querySelector('td[colspan]')) {
                         return;
                     }
