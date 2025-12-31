@@ -670,8 +670,7 @@
         function updateFefoTime() { document.getElementById('fefo-last-update').innerText = `Cập nhật: ${new Date().toLocaleTimeString('vi-VN')}`; }
         function reloadFefoData() { processFefoReportData(); alert("Đã làm mới dữ liệu!"); }
 
-        // === LOGIC GỐC CỦA KIEMTRAGIA (GIỮ NGUYÊN) ===
-        // ... (Giữ nguyên toàn bộ logic cũ ở đây để đảm bảo tính năng cũ không đổi)
+        // === LOGIC GỐC CỦA KIEMTRAGIA (ĐÃ SỬA LỖI THÊM VÀ LƯU HÀNG) ===
         let tempJsonData = null;
         let tempInventoryData = null;
         let currentInventoryData = null;
@@ -688,36 +687,79 @@
         const deliveryOrderTableBody = document.getElementById('deliveryOrderTableBody');
         const purchaseOrderTableBody = document.getElementById('purchaseOrderTableBody');
 
-        function parseNumber(str) { if (!str && str !== 0) return 0; let clean = String(str).trim(); if (clean.startsWith('(') && clean.endsWith(')')) clean = '-' + clean.slice(1,-1); clean = clean.replace(/,/g, ''); return parseFloat(clean) || 0; }
+        // Hàm parse và format
+        function parseNumber(str) { 
+            if (!str && str !== 0) return 0; 
+            let clean = String(str).trim(); 
+            if (clean.startsWith('(') && clean.endsWith(')')) clean = '-' + clean.slice(1,-1); 
+            clean = clean.replace(/,/g, ''); 
+            return parseFloat(clean) || 0; 
+        }
         function parseQuantity(str) { return Math.round(parseNumber(str)); }
         function parsePrice(str) { return parseNumber(str); }
         function formatNumber(num) { return new Intl.NumberFormat('en-US').format(num || 0); }
         function normalizeProductCode(code) { return String(code).trim().replace(/^0+/, '') || '0'; }
-        function getCKValue(row, key) { if (!key) return 0; let val = String(row[key]).trim(); if (val.includes('%')) return parseFloat(val.replace(/,/g,'').replace('%','')) || 0; let num = parseFloat(val.replace(/,/g,'')); return (Math.abs(num)>0 && Math.abs(num)<=1) ? num*100 : num; }
+        function getCKValue(row, key) { 
+            if (!key) return 0; 
+            let val = String(row[key]).trim(); 
+            if (val.includes('%')) return parseFloat(val.replace(/,/g,'').replace('%','')) || 0; 
+            let num = parseFloat(val.replace(/,/g,'')); 
+            return (Math.abs(num)>0 && Math.abs(num)<=1) ? num*100 : num; 
+        }
         
+        // Populate dataset selector
         function populateDatasetSelector() {
             masterDataRef.once('value', s => {
-                const d = s.val(); datasetSelector.innerHTML = '<option value="">-- Vui lòng chọn --</option>';
+                const d = s.val(); 
+                datasetSelector.innerHTML = '<option value="">-- Vui lòng chọn --</option>';
                 if(d) Object.keys(d).forEach(k => datasetSelector.appendChild(new Option(k,k)));
             });
         }
-        datasetSelector.onchange = () => { loadDataFromFirebase(); document.getElementById('currentDatasetName').textContent = datasetSelector.value || '...'; };
+        
+        // Load data from Firebase
         function loadDataFromFirebase() {
-            const k = datasetSelector.value; dataTableBody.innerHTML = '';
-            if(!k) { dataTableBody.innerHTML = '<tr><td colspan="9">Chọn bảng để xem.</td></tr>'; return; }
+            const k = datasetSelector.value; 
+            dataTableBody.innerHTML = '';
+            if(!k) { 
+                dataTableBody.innerHTML = '<tr><td colspan="9">Chọn bảng để xem.</td></tr>'; 
+                return; 
+            }
             dataTableBody.innerHTML = '<tr><td colspan="9">Đang tải...</td></tr>';
             masterDataRef.child(k).once('value', s => {
-                const d = s.val(); dataTableBody.innerHTML = '';
-                if(d) d.forEach(i => dataTableBody.appendChild(createTableRow(i)));
-                else dataTableBody.innerHTML = '<tr><td colspan="9">Không có dữ liệu.</td></tr>';
+                const d = s.val(); 
+                dataTableBody.innerHTML = '';
+                if(d) {
+                    d.forEach(i => dataTableBody.appendChild(createTableRow(i)));
+                } else {
+                    dataTableBody.innerHTML = '<tr><td colspan="9">Không có dữ liệu.</td></tr>';
+                }
+                document.getElementById('currentDatasetName').textContent = k;
             });
         }
-        function createTableRow(i, isNew=false) {
+        
+        datasetSelector.onchange = () => { 
+            loadDataFromFirebase();
+        };
+        
+        // Tạo hàng mới
+        function createTableRow(data, isNew=false) {
             const tr = document.createElement('tr');
-            tr.innerHTML = `<td contenteditable="${isNew}">${i.stt||''}</td><td contenteditable>${i.ma_sp||''}</td><td contenteditable>${i.ma_erp||''}</td><td contenteditable>${i.ten_sp||''}</td><td contenteditable>${i.gia_ban_display||formatNumber(i.gia_ban)}</td><td contenteditable>${i.ck_display||(i.chiet_khau+'%')}</td><td contenteditable>${i.gia_xuat_hd_display||formatNumber(i.gia_xuat_hd)}</td><td contenteditable>${i.quy_cach||1}</td><td><button class="delete-btn">Xóa</button></td>`;
-            tr.querySelector('.delete-btn').onclick = () => tr.remove(); return tr;
+            tr.innerHTML = `
+                <td contenteditable="${isNew}">${data.stt||dataTableBody.rows.length+1}</td>
+                <td contenteditable="true">${data.ma_sp||''}</td>
+                <td contenteditable="true">${data.ma_erp||''}</td>
+                <td contenteditable="true">${data.ten_sp||''}</td>
+                <td contenteditable="true">${data.gia_ban_display||formatNumber(data.gia_ban)}</td>
+                <td contenteditable="true">${data.ck_display||(data.chiet_khau+'%')}</td>
+                <td contenteditable="true">${data.gia_xuat_hd_display||formatNumber(data.gia_xuat_hd)}</td>
+                <td contenteditable="true">${data.quy_cach||1}</td>
+                <td><button class="delete-btn">Xóa</button></td>
+            `;
+            tr.querySelector('.delete-btn').onclick = () => tr.remove();
+            return tr;
         }
 
+        // Xử lý file Excel
         function processExcelFile(file, section, selects) {
             const reader = new FileReader();
             reader.onload = e => {
@@ -726,24 +768,195 @@
                 const headers = (XLSX.utils.sheet_to_json(ws, {header:1})[0]||[]).map(h=>String(h).trim());
                 const data = XLSX.utils.sheet_to_json(ws);
                 setupMappingUI(headers, data, section, selects);
-            }; reader.readAsArrayBuffer(file);
+            }; 
+            reader.readAsArrayBuffer(file);
         }
+        
         function setupMappingUI(headers, data, section, selects) {
-            if(section.id.includes('Inv')) tempInventoryData = data; else tempJsonData = data;
-            Object.values(selects).forEach(s => { s.innerHTML = '<option value="">-- Bỏ qua --</option>' + headers.map(h=>`<option value="${h}">${h}</option>`).join(''); });
+            if(section.id.includes('Inv')) {
+                tempInventoryData = data;
+            } else {
+                tempJsonData = data;
+            }
+            Object.values(selects).forEach(s => { 
+                s.innerHTML = '<option value="">-- Bỏ qua --</option>' + headers.map(h=>`<option value="${h}">${h}</option>`).join(''); 
+            });
             section.classList.remove('hidden');
         }
 
-        // Event Listeners (Rút gọn)
-        document.getElementById('addRowBtn').onclick = () => { if(datasetSelector.value) dataTableBody.appendChild(createTableRow({stt:dataTableBody.rows.length+1}, true)); };
-        document.getElementById('uploadMaster').onchange = e => { if(e.target.files[0]) { document.getElementById('datasetNameInput').value = e.target.files[0].name.replace(/\.[^/.]+$/, ""); processExcelFile(e.target.files[0], mappingSection, { mapSTT:document.getElementById('mapSTT'), mapMaSP:document.getElementById('mapMaSP'), mapMaERP:document.getElementById('mapMaERP'), mapTenSP:document.getElementById('mapTenSP'), mapGia:document.getElementById('mapGia'), mapCK:document.getElementById('mapCK'), mapGiaXuatHD:document.getElementById('mapGiaXuatHD'), mapQuyCach:document.getElementById('mapQuyCach') }); }};
-        document.getElementById('confirmMappingBtn').onclick = () => {
-            const m = { stt:document.getElementById('mapSTT').value, ma_sp:document.getElementById('mapMaSP').value, ma_erp:document.getElementById('mapMaERP').value, ten_sp:document.getElementById('mapTenSP').value, gia_ban:document.getElementById('mapGia').value, chiet_khau:document.getElementById('mapCK').value, gia_xuat_hd:document.getElementById('mapGiaXuatHD').value, quy_cach:document.getElementById('mapQuyCach').value, name:document.getElementById('datasetNameInput').value };
-            if(!m.ma_sp || !m.name) return alert("Thiếu thông tin bắt buộc!");
-            const data = tempJsonData.map((r,i) => ({ stt:r[m.stt]||(i+1), ma_sp:r[m.ma_sp], ma_erp:r[m.ma_erp], ten_sp:r[m.ten_sp], gia_ban:parsePrice(r[m.gia_ban]), gia_ban_display:r[m.gia_ban], chiet_khau:getCKValue(r,m.chiet_khau), ck_display:r[m.chiet_khau], gia_xuat_hd:parsePrice(r[m.gia_xuat_hd]), gia_xuat_hd_display:r[m.gia_xuat_hd], quy_cach:parseQuantity(r[m.quy_cach])||1 }));
-            masterDataRef.child(m.name).set(data).then(()=>{ alert("Đã lưu!"); populateDatasetSelector(); datasetSelector.value=m.name; loadDataFromFirebase(); mappingSection.classList.add('hidden'); });
+        // Event Listeners cho phần thêm hàng và lưu
+        document.getElementById('addRowBtn').onclick = () => { 
+            if(datasetSelector.value) {
+                const newRowData = {
+                    stt: dataTableBody.rows.length + 1,
+                    ma_sp: '',
+                    ma_erp: '',
+                    ten_sp: '',
+                    gia_ban: 0,
+                    gia_ban_display: '',
+                    chiet_khau: 0,
+                    ck_display: '',
+                    gia_xuat_hd: 0,
+                    gia_xuat_hd_display: '',
+                    quy_cach: 1
+                };
+                dataTableBody.appendChild(createTableRow(newRowData, true));
+            } else {
+                alert('Vui lòng chọn hoặc tạo bảng dữ liệu trước khi thêm hàng!');
+            }
         };
         
+        // Lưu dữ liệu vào Firebase
+        document.getElementById('saveToFirebaseBtn').onclick = () => {
+            const datasetName = datasetSelector.value;
+            if (!datasetName) {
+                alert('Vui lòng chọn bảng dữ liệu để lưu!');
+                return;
+            }
+            
+            const rows = dataTableBody.querySelectorAll('tr');
+            const data = [];
+            
+            rows.forEach((row, index) => {
+                const cells = row.querySelectorAll('td');
+                if (cells.length >= 8) {
+                    const rowData = {
+                        stt: parseInt(cells[0].innerText) || index + 1,
+                        ma_sp: cells[1].innerText.trim(),
+                        ma_erp: cells[2].innerText.trim(),
+                        ten_sp: cells[3].innerText.trim(),
+                        gia_ban: parsePrice(cells[4].innerText),
+                        gia_ban_display: cells[4].innerText.trim(),
+                        chiet_khau: getCKValue({value: cells[5].innerText}, 'value'),
+                        ck_display: cells[5].innerText.trim(),
+                        gia_xuat_hd: parsePrice(cells[6].innerText),
+                        gia_xuat_hd_display: cells[6].innerText.trim(),
+                        quy_cach: parseQuantity(cells[7].innerText) || 1
+                    };
+                    data.push(rowData);
+                }
+            });
+            
+            // Lưu vào Firebase
+            masterDataRef.child(datasetName).set(data).then(() => {
+                alert('Đã lưu dữ liệu thành công!');
+                populateDatasetSelector();
+            }).catch(error => {
+                alert('Lỗi khi lưu dữ liệu: ' + error.message);
+            });
+        };
+        
+        // Xuất Excel
+        document.getElementById('exportExcelBtn').onclick = () => {
+            const rows = dataTableBody.querySelectorAll('tr');
+            if (rows.length === 0) {
+                alert('Không có dữ liệu để xuất!');
+                return;
+            }
+            
+            const data = [];
+            rows.forEach((row, index) => {
+                const cells = row.querySelectorAll('td');
+                if (cells.length >= 8) {
+                    data.push({
+                        "STT": cells[0].innerText,
+                        "Mã SP": cells[1].innerText,
+                        "Mã ERP": cells[2].innerText,
+                        "Tên sản phẩm": cells[3].innerText,
+                        "Giá bán": cells[4].innerText,
+                        "Chiết khấu (%)": cells[5].innerText,
+                        "Giá xuất VAT": cells[6].innerText,
+                        "Quy cách": cells[7].innerText
+                    });
+                }
+            });
+            
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Data");
+            XLSX.writeFile(wb, `DuLieu_${datasetSelector.value}_${new Date().toISOString().slice(0,10)}.xlsx`);
+        };
+        
+        // Xóa bảng
+        document.getElementById('clearDataBtn').onclick = () => {
+            if (confirm('Bạn có chắc chắn muốn xóa toàn bộ dữ liệu trong bảng này?')) {
+                const datasetName = datasetSelector.value;
+                if (datasetName) {
+                    masterDataRef.child(datasetName).remove().then(() => {
+                        alert('Đã xóa bảng dữ liệu!');
+                        dataTableBody.innerHTML = '<tr><td colspan="9">Không có dữ liệu.</td></tr>';
+                        populateDatasetSelector();
+                    }).catch(error => {
+                        alert('Lỗi khi xóa dữ liệu: ' + error.message);
+                    });
+                } else {
+                    alert('Vui lòng chọn bảng cần xóa!');
+                }
+            }
+        };
+        
+        // Upload master file
+        document.getElementById('uploadMaster').onchange = e => { 
+            if(e.target.files[0]) { 
+                document.getElementById('datasetNameInput').value = e.target.files[0].name.replace(/\.[^/.]+$/, ""); 
+                processExcelFile(e.target.files[0], mappingSection, { 
+                    mapSTT: document.getElementById('mapSTT'), 
+                    mapMaSP: document.getElementById('mapMaSP'), 
+                    mapMaERP: document.getElementById('mapMaERP'), 
+                    mapTenSP: document.getElementById('mapTenSP'), 
+                    mapGia: document.getElementById('mapGia'), 
+                    mapCK: document.getElementById('mapCK'), 
+                    mapGiaXuatHD: document.getElementById('mapGiaXuatHD'), 
+                    mapQuyCach: document.getElementById('mapQuyCach') 
+                }); 
+            }
+        };
+        
+        // Xác nhận mapping và lưu
+        document.getElementById('confirmMappingBtn').onclick = () => {
+            const m = { 
+                stt: document.getElementById('mapSTT').value, 
+                ma_sp: document.getElementById('mapMaSP').value, 
+                ma_erp: document.getElementById('mapMaERP').value, 
+                ten_sp: document.getElementById('mapTenSP').value, 
+                gia_ban: document.getElementById('mapGia').value, 
+                chiet_khau: document.getElementById('mapCK').value, 
+                gia_xuat_hd: document.getElementById('mapGiaXuatHD').value, 
+                quy_cach: document.getElementById('mapQuyCach').value, 
+                name: document.getElementById('datasetNameInput').value 
+            };
+            
+            if(!m.ma_sp || !m.name) return alert("Thiếu thông tin bắt buộc!");
+            
+            const data = tempJsonData.map((r,i) => ({ 
+                stt: r[m.stt] || (i+1), 
+                ma_sp: r[m.ma_sp], 
+                ma_erp: r[m.ma_erp], 
+                ten_sp: r[m.ten_sp], 
+                gia_ban: parsePrice(r[m.gia_ban]), 
+                gia_ban_display: r[m.gia_ban], 
+                chiet_khau: getCKValue(r, m.chiet_khau), 
+                ck_display: r[m.chiet_khau], 
+                gia_xuat_hd: parsePrice(r[m.gia_xuat_hd]), 
+                gia_xuat_hd_display: r[m.gia_xuat_hd], 
+                quy_cach: parseQuantity(r[m.quy_cach]) || 1 
+            }));
+            
+            masterDataRef.child(m.name).set(data).then(() => {
+                alert("Đã lưu!"); 
+                populateDatasetSelector(); 
+                datasetSelector.value = m.name; 
+                loadDataFromFirebase(); 
+                mappingSection.classList.add('hidden'); 
+            });
+        };
+        
+        // Hủy mapping
+        document.getElementById('cancelMappingBtn').onclick = () => {
+            mappingSection.classList.add('hidden');
+            tempJsonData = null;
+        };
+
         // Tab Handler
         document.querySelectorAll('.tab-button').forEach(b => b.onclick = () => {
             const target = b.getAttribute('data-tab');
@@ -751,99 +964,341 @@
                 document.querySelectorAll('#resultContainer .tab-content').forEach(c => c.classList.remove('active'));
                 document.querySelectorAll('#result-tab-buttons .tab-button').forEach(btn => btn.classList.remove('active'));
             } else {
-                document.querySelectorAll('.tab-content').forEach(c => { if(c.parentElement.id !== 'resultContainer') c.classList.remove('active'); });
+                document.querySelectorAll('.tab-content').forEach(c => { 
+                    if(c.parentElement.id !== 'resultContainer') c.classList.remove('active'); 
+                });
                 document.querySelectorAll('.tab-buttons:not(#result-tab-buttons) .tab-button').forEach(btn => btn.classList.remove('active'));
             }
-            b.classList.add('active'); document.getElementById(target).classList.add('active');
+            b.classList.add('active'); 
+            document.getElementById(target).classList.add('active');
         });
 
         // Paste Logic for Order Check
         document.getElementById('processPasteBtn').onclick = () => {
             const val = document.getElementById('pasteData').value;
             if(!val || !datasetSelector.value) return alert("Chưa dán dữ liệu hoặc chưa chọn bảng gốc!");
-            const rows = val.trim().split('\n'); const h = rows[0].split(rows[0].includes('\t')?'\t':',');
+            const rows = val.trim().split('\n'); 
+            const h = rows[0].split(rows[0].includes('\t')?'\t':',');
             const data = []; 
             for(let i=1; i<rows.length; i++) {
                 let r = rows[i].split(rows[0].includes('\t')?'\t':',');
                 // Auto-fix multiline
                 while(r.length < h.length && i+1 < rows.length) { i++; r = (rows[i-1]+" "+rows[i]).split('\t'); }
-                let obj = {}; h.forEach((k,j) => obj[k.trim()] = (r[j]||'').replace(/^"|"$/g,'').trim()); data.push(obj);
+                let obj = {}; 
+                h.forEach((k,j) => obj[k.trim()] = (r[j]||'').replace(/^"|"$/g,'').trim()); 
+                data.push(obj);
             }
             tempJsonData = data;
-            setupMappingUI(h, data, mappingOrderSection, { mapOrderMaSP:document.getElementById('mapOrderMaSP'), mapOrderTenSP:document.getElementById('mapOrderTenSP'), mapOrderGia:document.getElementById('mapOrderGia'), mapOrderCK:document.getElementById('mapOrderCK'), mapOrderSoLuong:document.getElementById('mapOrderSoLuong') });
+            setupMappingUI(h, data, mappingOrderSection, { 
+                mapOrderMaSP: document.getElementById('mapOrderMaSP'), 
+                mapOrderTenSP: document.getElementById('mapOrderTenSP'), 
+                mapOrderGia: document.getElementById('mapOrderGia'), 
+                mapOrderCK: document.getElementById('mapOrderCK'), 
+                mapOrderSoLuong: document.getElementById('mapOrderSoLuong') 
+            });
         };
 
         document.getElementById('confirmOrderMappingBtn').onclick = () => {
-            const m = { ma_sp:document.getElementById('mapOrderMaSP').value, ten_sp:document.getElementById('mapOrderTenSP').value, gia:document.getElementById('mapOrderGia').value, ck:document.getElementById('mapOrderCK').value, sl:document.getElementById('mapOrderSoLuong').value, compare:document.getElementById('mapOrderCompareAgainst').value };
+            const m = { 
+                ma_sp: document.getElementById('mapOrderMaSP').value, 
+                ten_sp: document.getElementById('mapOrderTenSP').value, 
+                gia: document.getElementById('mapOrderGia').value, 
+                ck: document.getElementById('mapOrderCK').value, 
+                sl: document.getElementById('mapOrderSoLuong').value, 
+                compare: document.getElementById('mapOrderCompareAgainst').value 
+            };
+            
             masterDataRef.child(datasetSelector.value).once('value', s => {
-                const master = new Map(); s.val().forEach(i => { if(i.ma_sp) master.set(normalizeProductCode(i.ma_sp), i); });
+                const master = new Map(); 
+                s.val().forEach(i => { 
+                    if(i.ma_sp) master.set(normalizeProductCode(i.ma_sp), i); 
+                });
+                
                 const correct=[], incorrect=[], sales=[], customer=[];
                 tempJsonData.forEach(o => {
                     const code = normalizeProductCode(o[m.ma_sp]);
                     const item = master.get(code);
                     const qty = parseQuantity(o[m.sl]) || 1;
+                    
                     if(item) {
-                        const price = parsePrice(m.compare==='gia_xuat_hd'?item.gia_xuat_hd:item.gia_ban);
+                        const price = parsePrice(m.compare==='gia_xuat_hd' ? item.gia_xuat_hd : item.gia_ban);
                         const oPrice = parsePrice(o[m.gia]);
                         const match = Math.abs(price-oPrice)<1;
-                        if(match) correct.push(`<li>${code}: Đúng giá</li>`); else incorrect.push(`<li>${code}: Sai giá (ĐH:${oPrice}, Gốc:${price})</li>`);
+                        
+                        if(match) {
+                            correct.push(`<li>${code}: Đúng giá</li>`);
+                        } else {
+                            incorrect.push(`<li>${code}: Sai giá (ĐH:${oPrice}, Gốc:${price})</li>`);
+                        }
+                        
                         // Build Sales Order
-                        if(qty>0) sales.push({stt:sales.length+1, ma_sp:item.ma_sp, ma_erp:item.ma_erp, ten_sp:item.ten_sp, quy_cach_don_vi_mua:qty*item.quy_cach, gia_ban_don_vi:Math.round(item.gia_ban/item.quy_cach), tong_gia_tri:Math.round(item.gia_ban/item.quy_cach)*qty*item.quy_cach, thue_5:Math.round(item.gia_ban/item.quy_cach)*qty*item.quy_cach*0.05});
-                        // Build Customer Order (QUAN TRỌNG CHO TÍNH NĂNG MỚI)
-                        customer.push({stt:customer.length+1, ma_sp:o[m.ma_sp], ma_erp:item.ma_erp, ten_sp:item.ten_sp, gia_ban_dh:item.gia_ban_display, chiet_khau_dh:item.ck_display, so_luong_dh:qty, gia_xuat_hd_goc:item.gia_xuat_hd, tong_tien:item.gia_xuat_hd*qty});
-                    } else incorrect.push(`<li>${code}: Không tìm thấy</li>`);
+                        if(qty>0) sales.push({
+                            stt: sales.length+1, 
+                            ma_sp: item.ma_sp, 
+                            ma_erp: item.ma_erp, 
+                            ten_sp: item.ten_sp, 
+                            quy_cach_don_vi_mua: qty*item.quy_cach, 
+                            gia_ban_don_vi: Math.round(item.gia_ban/item.quy_cach), 
+                            tong_gia_tri: Math.round(item.gia_ban/item.quy_cach)*qty*item.quy_cach, 
+                            thue_5: Math.round(item.gia_ban/item.quy_cach)*qty*item.quy_cach*0.05
+                        });
+                        
+                        // Build Customer Order
+                        customer.push({
+                            stt: customer.length+1, 
+                            ma_sp: o[m.ma_sp], 
+                            ma_erp: item.ma_erp, 
+                            ten_sp: item.ten_sp, 
+                            gia_ban_dh: item.gia_ban_display, 
+                            chiet_khau_dh: item.ck_display, 
+                            so_luong_dh: qty, 
+                            gia_xuat_hd_goc: item.gia_xuat_hd, 
+                            tong_tien: item.gia_xuat_hd*qty
+                        });
+                    } else {
+                        incorrect.push(`<li>${code}: Không tìm thấy</li>`);
+                    }
                 });
+                
                 // Display Results
-                document.getElementById('results').innerHTML = `<div class="result-section correct"><h3>✅ Đúng (${correct.length})</h3><ul>${correct.join('')}</ul></div><div class="result-section incorrect"><h3>❌ Sai (${incorrect.length})</h3><ul>${incorrect.join('')}</ul></div>`;
-                salesOrderTableBody.innerHTML = sales.map(i=>`<tr><td>${i.stt}</td><td>${i.ma_sp}</td><td>${i.ma_erp}</td><td>${i.ten_sp}</td><td align="right">${formatNumber(i.quy_cach_don_vi_mua)}</td><td align="right">${formatNumber(i.gia_ban_don_vi)}</td><td align="right">${formatNumber(i.tong_gia_tri)}</td><td align="right">${formatNumber(i.thue_5)}</td></tr>`).join('');
-                customerOrderTableBody.innerHTML = customer.map(i=>`<tr><td>${i.stt}</td><td>${i.ma_sp}</td><td>${i.ma_erp}</td><td>${i.ten_sp}</td><td align="right">${i.gia_ban_dh}</td><td align="right">${i.chiet_khau_dh}</td><td align="right">${formatNumber(i.so_luong_dh)}</td><td align="right">${formatNumber(i.gia_xuat_hd_goc)}</td><td align="right">${formatNumber(i.tong_tien)}</td></tr>`).join('');
+                document.getElementById('results').innerHTML = `
+                    <div class="result-section correct">
+                        <h3>✅ Đúng (${correct.length})</h3>
+                        <ul>${correct.join('')}</ul>
+                    </div>
+                    <div class="result-section incorrect">
+                        <h3>❌ Sai (${incorrect.length})</h3>
+                        <ul>${incorrect.join('')}</ul>
+                    </div>`;
+                
+                salesOrderTableBody.innerHTML = sales.map(i => `
+                    <tr>
+                        <td>${i.stt}</td>
+                        <td>${i.ma_sp}</td>
+                        <td>${i.ma_erp}</td>
+                        <td>${i.ten_sp}</td>
+                        <td align="right">${formatNumber(i.quy_cach_don_vi_mua)}</td>
+                        <td align="right">${formatNumber(i.gia_ban_don_vi)}</td>
+                        <td align="right">${formatNumber(i.tong_gia_tri)}</td>
+                        <td align="right">${formatNumber(i.thue_5)}</td>
+                    </tr>
+                `).join('');
+                
+                customerOrderTableBody.innerHTML = customer.map(i => `
+                    <tr>
+                        <td>${i.stt}</td>
+                        <td>${i.ma_sp}</td>
+                        <td>${i.ma_erp}</td>
+                        <td>${i.ten_sp}</td>
+                        <td align="right">${i.gia_ban_dh}</td>
+                        <td align="right">${i.chiet_khau_dh}</td>
+                        <td align="right">${formatNumber(i.so_luong_dh)}</td>
+                        <td align="right">${formatNumber(i.gia_xuat_hd_goc)}</td>
+                        <td align="right">${formatNumber(i.tong_tien)}</td>
+                    </tr>
+                `).join('');
+                
                 document.getElementById('resultContainer').classList.remove('hidden');
                 document.querySelector('[data-tab="result-check-tab"]').click();
                 mappingOrderSection.classList.add('hidden');
             });
         };
 
-        // Inventory Logic (Giữ nguyên logic cũ)
-        document.getElementById('uploadInventory').onchange = e => { if(e.target.files[0]) processExcelFile(e.target.files[0], inventoryMappingSection, { mapInvSTT:document.getElementById('mapInvSTT'), mapInvMaSP:document.getElementById('mapInvMaSP'), mapInvTenSP:document.getElementById('mapInvTenSP'), mapInvTonCuoi:document.getElementById('mapInvTonCuoi') }); };
-        document.getElementById('confirmInventoryMappingBtn').onclick = () => {
-            const m = { stt:document.getElementById('mapInvSTT').value, ma_sp:document.getElementById('mapInvMaSP').value, ten_sp:document.getElementById('mapInvTenSP').value, ton:document.getElementById('mapInvTonCuoi').value };
-            currentInventoryData = tempInventoryData.map((r,i) => ({ stt:r[m.stt]||i+1, ma_sp:String(r[m.ma_sp]).trim(), ten_sp:r[m.ten_sp], ton_cuoi:parseQuantity(r[m.ton]) }));
-            inventoryTableBody.innerHTML = currentInventoryData.map(i=>`<tr><td>${i.stt}</td><td>${i.ma_sp}</td><td>${i.ten_sp}</td><td align="right">${formatNumber(i.ton_cuoi)}</td></tr>`).join('');
-            inventoryMappingSection.classList.add('hidden'); document.getElementById('inventoryTableContainer').classList.remove('hidden');
+        // Inventory Logic
+        document.getElementById('uploadInventory').onchange = e => { 
+            if(e.target.files[0]) processExcelFile(e.target.files[0], inventoryMappingSection, { 
+                mapInvSTT: document.getElementById('mapInvSTT'), 
+                mapInvMaSP: document.getElementById('mapInvMaSP'), 
+                mapInvTenSP: document.getElementById('mapInvTenSP'), 
+                mapInvTonCuoi: document.getElementById('mapInvTonCuoi') 
+            }); 
         };
+        
+        document.getElementById('confirmInventoryMappingBtn').onclick = () => {
+            const m = { 
+                stt: document.getElementById('mapInvSTT').value, 
+                ma_sp: document.getElementById('mapInvMaSP').value, 
+                ten_sp: document.getElementById('mapInvTenSP').value, 
+                ton: document.getElementById('mapInvTonCuoi').value 
+            };
+            
+            currentInventoryData = tempInventoryData.map((r,i) => ({ 
+                stt: r[m.stt] || (i+1), 
+                ma_sp: String(r[m.ma_sp]).trim(), 
+                ten_sp: r[m.ten_sp], 
+                ton_cuoi: parseQuantity(r[m.ton]) 
+            }));
+            
+            inventoryTableBody.innerHTML = currentInventoryData.map(i => `
+                <tr>
+                    <td>${i.stt}</td>
+                    <td>${i.ma_sp}</td>
+                    <td>${i.ten_sp}</td>
+                    <td align="right">${formatNumber(i.ton_cuoi)}</td>
+                </tr>
+            `).join('');
+            
+            inventoryMappingSection.classList.add('hidden'); 
+            document.getElementById('inventoryTableContainer').classList.remove('hidden');
+        };
+        
         document.getElementById('analyzeInventoryBtn').onclick = () => {
             if(!currentInventoryData) return alert("Chưa có dữ liệu tồn kho!");
+            if(!customerOrderTableBody.rows.length) return alert("Chưa có đơn hàng khách hàng!");
+            
             const del=[], pur=[];
             Array.from(customerOrderTableBody.rows).forEach(r => {
-                const c = r.cells; if(c.length<9) return;
-                const erp = c[2].innerText.trim(); const qty = parseQuantity(c[6].innerText);
+                const c = r.cells; 
+                if(c.length<9) return;
+                
+                const erp = c[2].innerText.trim(); 
+                const qty = parseQuantity(c[6].innerText);
                 const inv = currentInventoryData.find(i => normalizeProductCode(i.ma_sp) === normalizeProductCode(erp));
+                
                 if(inv) {
                     const stock = inv.ton_cuoi;
-                    if(stock >= qty) del.push({stt:del.length+1, ma_sp:inv.ma_sp, ma_erp:erp, ten_sp:c[3].innerText, so_luong_dat:qty, ton_kho:stock, so_luong_giao:qty, ghi_chu:'Đủ hàng'});
-                    else {
-                        del.push({stt:del.length+1, ma_sp:inv.ma_sp, ma_erp:erp, ten_sp:c[3].innerText, so_luong_dat:qty, ton_kho:stock, so_luong_giao:stock, ghi_chu:'Giao một phần'});
-                        pur.push({stt:pur.length+1, ma_sp:inv.ma_sp, ma_erp:erp, ten_sp:c[3].innerText, so_luong_dat:qty, ton_kho:stock, so_luong_dat_them:qty-stock, ghi_chu:'Thiếu hàng'});
+                    if(stock >= qty) {
+                        del.push({
+                            stt: del.length+1, 
+                            ma_sp: inv.ma_sp, 
+                            ma_erp: erp, 
+                            ten_sp: c[3].innerText, 
+                            so_luong_dat: qty, 
+                            ton_kho: stock, 
+                            so_luong_giao: qty, 
+                            ghi_chu: 'Đủ hàng'
+                        });
+                    } else {
+                        del.push({
+                            stt: del.length+1, 
+                            ma_sp: inv.ma_sp, 
+                            ma_erp: erp, 
+                            ten_sp: c[3].innerText, 
+                            so_luong_dat: qty, 
+                            ton_kho: stock, 
+                            so_luong_giao: stock, 
+                            ghi_chu: 'Giao một phần'
+                        });
+                        pur.push({
+                            stt: pur.length+1, 
+                            ma_sp: inv.ma_sp, 
+                            ma_erp: erp, 
+                            ten_sp: c[3].innerText, 
+                            so_luong_dat: qty, 
+                            ton_kho: stock, 
+                            so_luong_dat_them: qty-stock, 
+                            ghi_chu: 'Thiếu hàng'
+                        });
                     }
-                } else pur.push({stt:pur.length+1, ma_sp:'-', ma_erp:erp, ten_sp:c[3].innerText, so_luong_dat:qty, ton_kho:0, so_luong_dat_them:qty, ghi_chu:'Không có trong kho'});
+                } else {
+                    pur.push({
+                        stt: pur.length+1, 
+                        ma_sp: '-', 
+                        ma_erp: erp, 
+                        ten_sp: c[3].innerText, 
+                        so_luong_dat: qty, 
+                        ton_kho: 0, 
+                        so_luong_dat_them: qty, 
+                        ghi_chu: 'Không có trong kho'
+                    });
+                }
             });
-            deliveryOrderTableBody.innerHTML = del.map(i=>`<tr><td>${i.stt}</td><td>${i.ma_sp}</td><td>${i.ma_erp}</td><td>${i.ten_sp}</td><td align="right">${i.so_luong_dat}</td><td align="right">${i.ton_kho}</td><td align="right">${i.so_luong_giao}</td><td>${i.ghi_chu}</td></tr>`).join('');
-            purchaseOrderTableBody.innerHTML = pur.map(i=>`<tr><td>${i.stt}</td><td>${i.ma_sp}</td><td>${i.ma_erp}</td><td>${i.ten_sp}</td><td align="right">${i.so_luong_dat}</td><td align="right">${i.ton_kho}</td><td align="right">${i.so_luong_dat_them}</td><td>${i.ghi_chu}</td></tr>`).join('');
-            document.getElementById('resultContainer').classList.remove('hidden'); document.querySelector('[data-tab="result-inventory-tab"]').click();
+            
+            deliveryOrderTableBody.innerHTML = del.map(i => `
+                <tr>
+                    <td>${i.stt}</td>
+                    <td>${i.ma_sp}</td>
+                    <td>${i.ma_erp}</td>
+                    <td>${i.ten_sp}</td>
+                    <td align="right">${i.so_luong_dat}</td>
+                    <td align="right">${i.ton_kho}</td>
+                    <td align="right">${i.so_luong_giao}</td>
+                    <td>${i.ghi_chu}</td>
+                </tr>
+            `).join('');
+            
+            purchaseOrderTableBody.innerHTML = pur.map(i => `
+                <tr>
+                    <td>${i.stt}</td>
+                    <td>${i.ma_sp}</td>
+                    <td>${i.ma_erp}</td>
+                    <td>${i.ten_sp}</td>
+                    <td align="right">${i.so_luong_dat}</td>
+                    <td align="right">${i.ton_kho}</td>
+                    <td align="right">${i.so_luong_dat_them}</td>
+                    <td>${i.ghi_chu}</td>
+                </tr>
+            `).join('');
+            
+            document.getElementById('resultContainer').classList.remove('hidden'); 
+            document.querySelector('[data-tab="result-inventory-tab"]').click();
         };
         
         // Export Helpers
         const exportExcel = (rows, name, cols) => {
-             const data = Array.from(rows).map(r => { let o={}; Array.from(r.cells).forEach((c,i)=>o[cols[i]]=c.innerText); return o; });
-             const ws = XLSX.utils.json_to_sheet(data); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,name); XLSX.writeFile(wb,name+".xlsx");
+            const data = Array.from(rows).map(r => { 
+                let o = {}; 
+                Array.from(r.cells).forEach((c,i) => o[cols[i]] = c.innerText); 
+                return o; 
+            });
+            const ws = XLSX.utils.json_to_sheet(data); 
+            const wb = XLSX.utils.book_new(); 
+            XLSX.utils.book_append_sheet(wb, ws, name); 
+            XLSX.writeFile(wb, name + ".xlsx");
         };
+        
         document.getElementById('exportSalesOrderBtn').onclick = () => exportExcel(salesOrderTableBody.rows, "DonHangBan", ["STT","Mã","Mã ERP","Tên SP","Quy cách","Giá bán","Tổng","Thuế"]);
         document.getElementById('exportCustomerOrderBtn').onclick = () => exportExcel(customerOrderTableBody.rows, "DonHangKhachHang", ["STT","Mã","Mã ERP","Tên SP","Giá bán","CK","SL","Giá xuất","Tổng tiền"]);
         document.getElementById('exportDeliveryOrderBtn').onclick = () => exportExcel(deliveryOrderTableBody.rows, "DonTamGiao", ["STT","Mã SP","Mã ERP","Tên SP","SL Đặt","Tồn","SL Giao","Ghi chú"]);
         document.getElementById('exportPurchaseOrderBtn').onclick = () => exportExcel(purchaseOrderTableBody.rows, "DonCanDat", ["STT","Mã SP","Mã ERP","Tên SP","SL Đặt","Tồn","SL Thêm","Ghi chú"]);
 
+        // Modal Help
+        document.getElementById('helpBtn').onclick = () => {
+            document.getElementById('helpModal').classList.add('modal-show');
+        };
+        
+        document.getElementById('closeHelpModal').onclick = () => {
+            document.getElementById('helpModal').classList.remove('modal-show');
+        };
+        
+        // Xuất HD
+        document.getElementById('exportHDBtn').onclick = () => {
+            const rows = dataTableBody.querySelectorAll('tr');
+            const hdTableBody = document.getElementById('hdTableBody');
+            hdTableBody.innerHTML = '';
+            
+            rows.forEach((row, index) => {
+                const cells = row.querySelectorAll('td');
+                if (cells.length >= 8) {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${cells[1].innerText}</td>
+                        <td>${cells[3].innerText}</td>
+                        <td>${cells[7].innerText}</td>
+                        <td align="right">${cells[4].innerText}</td>
+                    `;
+                    hdTableBody.appendChild(tr);
+                }
+            });
+            
+            document.getElementById('hdModal').classList.add('modal-show');
+        };
+        
+        document.getElementById('closeHdModal').onclick = () => {
+            document.getElementById('hdModal').classList.remove('modal-show');
+        };
+
         // Init
         populateDatasetSelector();
+        window.onload = () => {
+            // Load first dataset if exists
+            setTimeout(() => {
+                if (datasetSelector.options.length > 1) {
+                    datasetSelector.selectedIndex = 1;
+                    loadDataFromFirebase();
+                }
+            }, 500);
+        };
     </script>
 </body>
 </html>
